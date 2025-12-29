@@ -26,10 +26,10 @@ pnpm dev
 
 開発サーバーは <http://localhost:4321/> で起動します。
 
-## Cloudflare Pagesデプロイ
+## Cloudflare Workersデプロイ
 
-このプロジェクトは wrangler CLI を使用して Cloudflare Pages にデプロイします。
-すべての設定は `wrangler.toml` で管理され、Infrastructure as Code を実現しています。
+このプロジェクトは wrangler CLI を使用して Cloudflare Workers にデプロイします。
+すべての設定は `wrangler.jsonc` で管理され、Infrastructure as Code を実現しています。
 
 ### 初回セットアップ
 
@@ -65,22 +65,26 @@ pnpm preview
 
 ### 設定ファイル
 
-#### wrangler.toml
-プロジェクト設定は `wrangler.toml` で管理されています。
+#### wrangler.jsonc
+プロジェクト設定は `wrangler.jsonc` で管理されています。
 - プロジェクト名
-- ビルド出力ディレクトリ
-- 環境別設定
+- 互換性日付
+- 静的アセットディレクトリ
 
+Cloudflare Workers の新しい設定形式（JSON with Comments）を使用しています。
 デプロイ設定を変更する場合は、このファイルを編集してください。
 
 #### 環境変数（本番環境）
 本番環境の環境変数は以下の方法で設定できます：
 
-**方法1: wrangler.toml で管理（推奨 - Infrastructure as Code）**
-```toml
-# wrangler.toml に追加
-[vars]
-PUBLIC_R2_URL = "https://pub-example.r2.dev"
+**方法1: wrangler.jsonc で管理（推奨 - Infrastructure as Code）**
+```jsonc
+// wrangler.jsonc に追加
+{
+  "vars": {
+    "PUBLIC_R2_URL": "https://pub-example.r2.dev"
+  }
+}
 ```
 
 **方法2: Cloudflare Dashboard で設定**
@@ -89,15 +93,15 @@ PUBLIC_R2_URL = "https://pub-example.r2.dev"
 3. `PUBLIC_R2_URL` を追加
 
 **注意**:
-- 平文で管理可能な値は wrangler.toml の `[vars]` ブロックで管理できます
-- 機密情報は `wrangler pages secret put` コマンドまたは Cloudflare Dashboard で設定してください
+- 平文で管理可能な値は wrangler.jsonc の `vars` ブロックで管理できます
+- 機密情報は `npx wrangler secret put` コマンドまたは Cloudflare Dashboard で設定してください
 
 ### トラブルシューティング
 
 **デプロイエラー時：**
 1. `npx wrangler login` でログイン状態を確認
 2. `pnpm build` がローカルで成功するか確認
-3. wrangler.toml の設定を確認
+3. wrangler.jsonc の設定を確認
 
 **環境変数が反映されない：**
 - Cloudflare Dashboard で環境変数が設定されているか確認
@@ -110,7 +114,7 @@ PUBLIC_R2_URL = "https://pub-example.r2.dev"
 - **言語**: TypeScript 5.7+ (strict mode)
 - **リント/フォーマット**: Biome 1.9+
 - **テスト**: Vitest 2.1+ / Playwright 1.49+
-- **ホスティング**: Cloudflare Pages
+- **ホスティング**: Cloudflare Workers
 - **画像ストレージ**: Cloudflare R2（予定）
 
 ## コマンド
@@ -120,8 +124,8 @@ PUBLIC_R2_URL = "https://pub-example.r2.dev"
 | `pnpm dev` | 開発サーバー起動 |
 | `pnpm build` | 本番ビルド |
 | `pnpm preview` | ビルドしたサイトをプレビュー |
-| `pnpm cf:deploy` | Cloudflare Pages にデプロイ（本番） |
-| `pnpm cf:deploy:preview` | Cloudflare Pages にデプロイ（プレビュー） |
+| `pnpm cf:deploy` | Cloudflare Workers にデプロイ（本番） |
+| `pnpm cf:deploy:preview` | Cloudflare Workers にデプロイ（プレビュー） |
 | `pnpm check` | TypeScript型チェック |
 | `pnpm lint` | リント・フォーマット実行 |
 | `pnpm test` | 単体テスト実行 |
