@@ -29,9 +29,29 @@ pnpm dev
 ## Cloudflare Pagesデプロイ
 
 このプロジェクトは wrangler CLI を使用して Cloudflare Pages にデプロイします。
-すべての設定は `wrangler.toml` で管理され、Infrastructure as Code を実現しています。
+すべての設定は `wrangler.toml` と `.github/workflows/deploy.yml` で管理され、Infrastructure as Code を実現しています。
 
-### 初回セットアップ
+### 自動デプロイ（CI/CD）
+
+main ブランチへのプッシュ時に、GitHub Actions が自動的にビルドとデプロイを実行します。
+
+**必要な GitHub Secrets:**
+- `CLOUDFLARE_API_TOKEN`: Cloudflare API トークン
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare アカウント ID
+
+#### GitHub Secrets の設定方法
+
+1. Cloudflare Dashboard → My Profile → API Tokens
+2. "Create Token" → "Edit Cloudflare Workers" テンプレートを使用
+3. Account Resources: 対象アカウントを選択
+4. Zone Resources: All zones
+5. トークンを生成してコピー
+
+6. GitHub リポジトリ → Settings → Secrets and variables → Actions
+7. "New repository secret" をクリック
+8. `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を追加
+
+### 初回セットアップ（ローカル開発用）
 
 #### 1. Cloudflare アカウントでログイン
 ```bash
@@ -45,7 +65,9 @@ cp .env.example .env
 # .envファイルを編集してR2 URLを設定
 ```
 
-### デプロイコマンド
+### 手動デプロイ（オプション）
+
+通常は main ブランチへのマージで自動デプロイされますが、手動でデプロイすることも可能です。
 
 #### 本番環境へデプロイ
 ```bash
