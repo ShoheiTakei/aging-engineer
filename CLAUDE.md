@@ -6,17 +6,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **常に日本語で回答してください。** All responses should be in Japanese.
 
-## Repository Status
+## 現在の状況
 
-This repository is currently empty and has not yet been initialized with a project structure.
+### プロジェクト初期化完了
 
-## Next Steps
+- **フレームワーク**: Astro 5.1.3 + Tailwind CSS 4.0
+- **言語**: TypeScript（strict mode）
+- **コード品質**: Biome（リント・フォーマット）
+- **レンダリング**: SSG（Static Site Generation）モード
 
-When code is added to this repository, this file should be updated to include:
+### デプロイ環境
 
-1. **Build and Development Commands**: How to build, test, lint, and run the project
-2. **Architecture Overview**: High-level code organization and key design patterns
-3. **Project-Specific Conventions**: Any coding standards or practices unique to this project
-4. **Development Workflow**: How to contribute, branch naming conventions, etc.
+- **ホスティング**: Cloudflare Pages
+- **CDN**: Cloudflare CDN（標準装備）
+- **画像ストレージ**: Cloudflare R2（予定）
 
-To update this file after adding code, run `/init` again.
+### デプロイフロー
+
+1. GitHubにプッシュ
+2. Cloudflare Pagesが自動ビルド
+3. 全世界のCDNに配信
+
+詳細は[README.md](README.md)を参照してください。
+
+## ビルド・開発コマンド
+
+| コマンド | 説明 |
+|---------|------|
+| `pnpm dev` | 開発サーバー起動 |
+| `pnpm build` | 本番ビルド |
+| `pnpm preview` | ビルドしたサイトをプレビュー |
+| `pnpm check` | TypeScript型チェック |
+| `pnpm lint` | リント・フォーマット実行 |
+
+## プロジェクト構造
+
+```
+src/
+├── pages/          # ルーティング（Astro Pages）
+├── styles/         # グローバルスタイル（Tailwind CSS 4）
+└── env.d.ts        # TypeScript型定義
+```
+
+## 開発規約
+
+- **コミットメッセージ**: Conventional Commits準拠
+- **ブランチ命名**: `feat/機能名`, `fix/修正内容`
+- **PRフロー**: 各ステップごとにPRを作成
+- **コードレビュー**: CodeRabbit自動レビュー
