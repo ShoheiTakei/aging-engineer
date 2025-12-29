@@ -1,0 +1,2 @@
+# Ignore docs directory (design documents, not source code)
+docs/
