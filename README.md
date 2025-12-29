@@ -5,25 +5,21 @@ Astro 5 + Tailwind CSS 4 で構築された技術ブログ
 ## 開発環境セットアップ
 
 ### 必要な環境
-
 - Node.js 20.x
 - pnpm 9.x
 
 ### インストール
-
 ```bash
 pnpm install
 ```
 
 ### 環境変数設定
-
 ```bash
 cp .env.example .env
 # .envファイルを編集してR2 URLを設定
 ```
 
 ### 開発サーバー起動
-
 ```bash
 pnpm dev
 ```
@@ -32,60 +28,65 @@ pnpm dev
 
 ## Cloudflare Pagesデプロイ
 
+このプロジェクトは wrangler CLI を使用して Cloudflare Pages にデプロイします。
+すべての設定は `wrangler.toml` で管理され、Infrastructure as Code を実現しています。
+
 ### 初回セットアップ
 
-#### 1. Cloudflare Pagesプロジェクト作成
-
-- Cloudflare Dashboard → Pages → Create a project
-- GitHubリポジトリを接続: `ShoheiTakei/aging-engineer`
-
-#### 2. ビルド設定
-
-- **Framework preset**: Astro
-- **Build command**: `pnpm build`
-- **Build output directory**: `dist`
-- **Root directory**: `/` （ルート）
-- **Node.js version**: `20`
-
-#### 3. 環境変数設定
-
-Cloudflare Pagesの設定画面で以下の環境変数を設定：
-
-- **環境変数名**: `PUBLIC_R2_URL`
-- **値**: Cloudflare R2バケットの公開URL
-  ```
-  https://pub-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev
-  ```
-
-### デプロイフロー
-
-#### 自動デプロイ（推奨）
-
-- `main`ブランチへのプッシュ → 本番環境に自動デプロイ
-- Pull Request作成 → プレビュー環境に自動デプロイ
-
-#### 手動デプロイ
-
+#### 1. Cloudflare アカウントでログイン
 ```bash
-# ローカルでビルドテスト
-pnpm build
+npx wrangler login
+```
 
-# ビルド成果物の確認
+#### 2. 環境変数設定
+ローカル開発用の環境変数を設定：
+```bash
+cp .env.example .env
+# .envファイルを編集してR2 URLを設定
+```
+
+### デプロイコマンド
+
+#### 本番環境へデプロイ
+```bash
+pnpm deploy
+```
+
+#### ビルド確認（デプロイ前）
+```bash
+pnpm build
 pnpm preview
 ```
 
+### 設定ファイル
+
+#### wrangler.toml
+プロジェクト設定は `wrangler.toml` で管理されています。
+- プロジェクト名
+- ビルド出力ディレクトリ
+- 環境別設定
+
+デプロイ設定を変更する場合は、このファイルを編集してください。
+
+#### 環境変数（本番環境）
+本番環境の環境変数は Cloudflare Dashboard で設定します：
+1. Cloudflare Dashboard → Workers & Pages → aging-engineer
+2. Settings → Environment variables
+3. `PUBLIC_R2_URL` を追加
+
+**注意**: 初回デプロイ後に Dashboard で環境変数を設定してください。
+wrangler では環境変数の設定はサポートされていません。
+
 ### トラブルシューティング
 
-#### ビルドエラー時
+**デプロイエラー時：**
+1. `npx wrangler login` でログイン状態を確認
+2. `pnpm build` がローカルで成功するか確認
+3. wrangler.toml の設定を確認
 
-1. Node.jsバージョンを確認（20.x推奨）
-2. `pnpm install`で依存関係を再インストール
-3. ローカルで`pnpm build`が成功するか確認
-
-#### 環境変数が反映されない
-
-- Cloudflare Pages設定で環境変数が正しく設定されているか確認
-- プレフィックス`PUBLIC_`が必須（Astroの仕様）
+**環境変数が反映されない：**
+- Cloudflare Dashboard で環境変数が設定されているか確認
+- プレフィックス `PUBLIC_` が必須（Astroの仕様）
 
 ## 技術スタック
 
@@ -104,6 +105,7 @@ pnpm preview
 | `pnpm dev` | 開発サーバー起動 |
 | `pnpm build` | 本番ビルド |
 | `pnpm preview` | ビルドしたサイトをプレビュー |
+| `pnpm deploy` | Cloudflare Pages にデプロイ |
 | `pnpm check` | TypeScript型チェック |
 | `pnpm lint` | リント・フォーマット実行 |
 | `pnpm test` | 単体テスト実行 |

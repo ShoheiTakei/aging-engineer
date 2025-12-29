@@ -1,0 +1,10 @@
+name = "aging-engineer"
+compatibility_date = "2024-01-15"
+
+pages_build_output_dir = "dist"
+
+[env.production]
+name = "aging-engineer"
+
+[env.preview]
+name = "aging-engineer-preview"
