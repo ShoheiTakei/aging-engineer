@@ -41,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト構造
 
-```
+```text
 src/
 ├── pages/          # ルーティング（Astro Pages）
 ├── styles/         # グローバルスタイル（Tailwind CSS 4）

@@ -24,7 +24,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-開発サーバーは http://localhost:4321/ で起動します。
+開発サーバーは <http://localhost:4321/> で起動します。
 
 ## Cloudflare Pagesデプロイ
 
@@ -74,13 +74,23 @@ pnpm preview
 デプロイ設定を変更する場合は、このファイルを編集してください。
 
 #### 環境変数（本番環境）
-本番環境の環境変数は Cloudflare Dashboard で設定します：
+本番環境の環境変数は以下の方法で設定できます：
+
+**方法1: wrangler.toml で管理（推奨 - Infrastructure as Code）**
+```toml
+# wrangler.toml に追加
+[vars]
+PUBLIC_R2_URL = "https://pub-example.r2.dev"
+```
+
+**方法2: Cloudflare Dashboard で設定**
 1. Cloudflare Dashboard → Workers & Pages → aging-engineer
 2. Settings → Environment variables
 3. `PUBLIC_R2_URL` を追加
 
-**注意**: 初回デプロイ後に Dashboard で環境変数を設定してください。
-wrangler では環境変数の設定はサポートされていません。
+**注意**:
+- 平文で管理可能な値は wrangler.toml の `[vars]` ブロックで管理できます
+- 機密情報は `wrangler pages secret put` コマンドまたは Cloudflare Dashboard で設定してください
 
 ### トラブルシューティング
 
