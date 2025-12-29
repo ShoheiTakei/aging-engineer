@@ -75,7 +75,7 @@ pnpm preview
 
 #### 環境変数（本番環境）
 本番環境の環境変数は Cloudflare Dashboard で設定します：
-1. Cloudflare Dashboard → Workers & Pages → aging-engineer-blog
+1. Cloudflare Dashboard → Workers & Pages → aging-engineer
 2. Settings → Environment variables
 3. `PUBLIC_R2_URL` を追加
 
