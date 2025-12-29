@@ -77,7 +77,7 @@ Cloudflare Workers の新しい設定形式（JSON with Comments）を使用し�
 #### 環境変数（本番環境）
 本番環境の環境変数は以下の方法で設定できます：
 
-**方法1: wrangler.jsonc で管理（推奨 - Infrastructure as Code）**
+##### 方法1: wrangler.jsonc で管理（推奨 - Infrastructure as Code）
 ```jsonc
 // wrangler.jsonc に追加
 {
@@ -87,7 +87,7 @@ Cloudflare Workers の新しい設定形式（JSON with Comments）を使用し�
 }
 ```
 
-**方法2: Cloudflare Dashboard で設定**
+##### 方法2: Cloudflare Dashboard で設定
 1. Cloudflare Dashboard → Workers & Pages → aging-engineer
 2. Settings → Environment variables
 3. `PUBLIC_R2_URL` を追加
