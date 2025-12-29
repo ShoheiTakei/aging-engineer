@@ -49,7 +49,12 @@ cp .env.example .env
 
 #### 本番環境へデプロイ
 ```bash
-pnpm deploy
+pnpm cf:deploy
+```
+
+#### プレビュー環境へデプロイ
+```bash
+pnpm cf:deploy:preview
 ```
 
 #### ビルド確認（デプロイ前）
@@ -105,7 +110,8 @@ wrangler では環境変数の設定はサポートされていません。
 | `pnpm dev` | 開発サーバー起動 |
 | `pnpm build` | 本番ビルド |
 | `pnpm preview` | ビルドしたサイトをプレビュー |
-| `pnpm deploy` | Cloudflare Pages にデプロイ |
+| `pnpm cf:deploy` | Cloudflare Pages にデプロイ（本番） |
+| `pnpm cf:deploy:preview` | Cloudflare Pages にデプロイ（プレビュー） |
 | `pnpm check` | TypeScript型チェック |
 | `pnpm lint` | リント・フォーマット実行 |
 | `pnpm test` | 単体テスト実行 |
