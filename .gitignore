@@ -32,3 +32,6 @@ storybook-static/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Wrangler
+.wrangler/
