@@ -1,5 +1,2 @@
 # Ignore docs directory (design documents, not source code)
 docs/
-
-# Ignore task files
-docs/tasks/
