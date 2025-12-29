@@ -1,10 +1,10 @@
-name = "aging-engineer"
+name = "aging-engineer-blog"
 compatibility_date = "2024-01-15"
 
 pages_build_output_dir = "dist"
 
 [env.production]
-name = "aging-engineer"
+name = "aging-engineer-blog"
 
 [env.preview]
-name = "aging-engineer-preview"
+name = "aging-engineer-blog-preview"
