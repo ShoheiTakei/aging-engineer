@@ -1,0 +1,134 @@
+/**
+ * グローバルスタイル - Tailwind CSS v4
+ */
+
+@import "tailwindcss";
+
+/**
+ * カスタムベーススタイル
+ * NFR-301: セマンティックHTML、WCAG 2.1 AA準拠
+ */
+@layer base {
+  :root {
+    /* ライトモードカラー */
+    --color-primary: 59 130 246; /* blue-500 */
+    --color-secondary: 107 114 128; /* gray-500 */
+    --color-background: 255 255 255; /* white */
+    --color-text: 17 24 39; /* gray-900 */
+  }
+
+  .dark {
+    /* ダークモードカラー (tech-stack.md: ダークモードデフォルト) */
+    --color-primary: 96 165 250; /* blue-400 */
+    --color-secondary: 156 163 175; /* gray-400 */
+    --color-background: 17 24 39; /* gray-900 */
+    --color-text: 243 244 246; /* gray-100 */
+  }
+
+  /* NFR-304: フォーカス可視化 (WCAG 2.1 AA) */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+  }
+
+  /* セマンティックHTML - 基本スタイル */
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply font-sans antialiased;
+  }
+
+  /* 見出しスタイル */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold leading-tight;
+  }
+
+  h1 { @apply text-4xl md:text-5xl; }
+  h2 { @apply text-3xl md:text-4xl; }
+  h3 { @apply text-2xl md:text-3xl; }
+  h4 { @apply text-xl md:text-2xl; }
+  h5 { @apply text-lg md:text-xl; }
+  h6 { @apply text-base md:text-lg; }
+
+  /* リンクスタイル */
+  a {
+    @apply text-blue-600 dark:text-blue-400 hover:underline;
+    @apply transition-colors duration-200;
+  }
+
+  /* コードブロックスタイル (REQ-111: Shiki対応) */
+  pre {
+    @apply rounded-lg overflow-x-auto p-4 my-4;
+  }
+
+  code {
+    @apply font-mono text-sm;
+  }
+
+  /* 画像のレスポンシブ対応 (NFR-202) */
+  img {
+    @apply max-w-full h-auto;
+  }
+}
+
+/**
+ * カスタムコンポーネントスタイル
+ */
+@layer components {
+  /* ボタンスタイル */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium;
+    @apply transition-colors duration-200;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+    @apply dark:bg-blue-500 dark:hover:bg-blue-600;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+    @apply dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
+  }
+
+  /* カードスタイル */
+  .card {
+    @apply bg-white dark:bg-gray-800;
+    @apply border border-gray-200 dark:border-gray-700;
+    @apply rounded-lg shadow-sm;
+    @apply transition-shadow duration-200;
+    @apply hover:shadow-md;
+  }
+}
+
+/**
+ * ユーティリティクラス
+ */
+@layer utilities {
+  /* コンテナ最大幅 */
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-4;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4;
+  }
+
+  /* テキスト切り詰め */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
