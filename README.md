@@ -52,9 +52,9 @@ cp .env.example .env
 pnpm cf:deploy
 ```
 
-#### プレビュー環境へデプロイ
+#### 開発環境へデプロイ
 ```bash
-pnpm cf:deploy:preview
+pnpm cf:deploy:dev
 ```
 
 #### ビルド確認（デプロイ前）
@@ -63,16 +63,82 @@ pnpm build
 pnpm preview
 ```
 
+### GitHub Actionsによる自動デプロイ
+
+このプロジェクトはGitHub Actionsを使用して自動デプロイを行います。
+
+#### 本番環境（Production）
+
+**トリガー**: `main`ブランチへのpush
+
+```yaml
+# .github/workflows/deploy.yml
+- mainブランチにマージされると自動的にデプロイ
+- デプロイ先: aging-engineer (--env production)
+```
+
+**フロー**:
+1. Pull Requestを作成
+2. レビュー・承認
+3. `main`ブランチへマージ
+4. 自動的に本番環境へデプロイ
+
+#### 開発環境（Develop）
+
+**トリガー**: Pull Requestの作成・更新
+
+```yaml
+# .github/workflows/preview.yml
+- PR作成・更新時に自動的にデプロイ
+- デプロイ先: aging-engineer-dev (--env develop)
+```
+
+**フロー**:
+1. Pull Requestを作成
+2. 自動的に開発環境へデプロイ
+3. PRコメントにデプロイ情報が表示される
+4. 開発環境で動作確認
+
+#### 必要なGitHub Secrets
+
+以下のSecretsを設定する必要があります：
+
+| Secret名 | 取得方法 |
+|---------|---------|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare Dashboard → My Profile → API Tokens → Create Token |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Dashboard → Workers & Pages（サイドバー） |
+
+**API Token の権限設定**:
+- **権限**: Account → Workers Scripts → Edit
+- **アカウント リソース**: 含む → すべてのアカウント
+
 ### 設定ファイル
 
 #### wrangler.jsonc
+
 プロジェクト設定は `wrangler.jsonc` で管理されています。
-- プロジェクト名
-- 互換性日付
-- 静的アセットディレクトリ
+
+**環境設定**:
+```jsonc
+{
+  "compatibility_date": "2024-12-29",
+  "assets": { "directory": "./dist" },
+  "env": {
+    "production": {
+      "name": "aging-engineer"  // 本番環境
+    },
+    "develop": {
+      "name": "aging-engineer-dev"  // 開発環境
+    }
+  }
+}
+```
+
+- **共通設定**: 互換性日付、静的アセットディレクトリ
+- **環境ごとの設定**: Worker名を環境ごとに指定
+- **デプロイ方法**: `--env production` または `--env develop` で環境を明示
 
 Cloudflare Workers の新しい設定形式（JSON with Comments）を使用しています。
-デプロイ設定を変更する場合は、このファイルを編集してください。
 
 #### 環境変数（本番環境）
 本番環境の環境変数は以下の方法で設定できます：

@@ -7,11 +7,11 @@
 
   // 環境ごとの設定
   "env": {
-    "prod": {
+    "production": {
       "name": "aging-engineer"
     },
-    "preview": {
-      "name": "aging-engineer-preview"
+    "develop": {
+      "name": "aging-engineer-dev"
     }
   }
 }
