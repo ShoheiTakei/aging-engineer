@@ -1,12 +1,17 @@
 {
-  "name": "aging-engineer",
-  "compatibility_date": "2024-12-29",
+  // 共通設定（全環境で継承される）
+  "compatibility_date": "2025-12-30",
   "assets": {
     "directory": "./dist"
   },
+
+  // 環境ごとの設定
   "env": {
-    "preview": {
-      "name": "aging-engineer-preview"
+    "production": {
+      "name": "aging-engineer"
+    },
+    "develop": {
+      "name": "aging-engineer-dev"
     }
   }
 }
