@@ -1,11 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
 describe('BaseLayout Component', () => {
+	let container: Awaited<ReturnType<typeof AstroContainer.create>>;
+
+	beforeEach(async () => {
+		container = await AstroContainer.create();
+	});
+
 	describe('セマンティックHTML構造', () => {
 		it('should render html element with lang="ja"', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -17,7 +22,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render head element', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -30,7 +34,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render body element', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -43,7 +46,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render main element', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -58,7 +60,6 @@ describe('BaseLayout Component', () => {
 
 	describe('メタタグ', () => {
 		it('should render title tag with provided title', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -70,7 +71,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render description meta tag', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -82,7 +82,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render viewport meta tag', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -96,7 +95,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render charset meta tag', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -110,7 +108,6 @@ describe('BaseLayout Component', () => {
 
 	describe('OGPメタタグ', () => {
 		it('should render og:title meta tag', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -123,7 +120,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render og:description meta tag', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -138,7 +134,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render og:type meta tag with "website" as default', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -151,7 +146,6 @@ describe('BaseLayout Component', () => {
 		});
 
 		it('should render og:url meta tag when provided', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -168,7 +162,6 @@ describe('BaseLayout Component', () => {
 
 	describe('スタイルシート', () => {
 		it('should import global.css', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -183,7 +176,6 @@ describe('BaseLayout Component', () => {
 
 	describe('slotコンテンツ', () => {
 		it('should render slot content', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
@@ -200,7 +192,6 @@ describe('BaseLayout Component', () => {
 
 	describe('ダークモード対応', () => {
 		it('should include dark mode class on body', async () => {
-			const container = await AstroContainer.create();
 			const result = await container.renderToString(BaseLayout, {
 				props: {
 					title: 'テストページ',
