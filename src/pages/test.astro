@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+
+// 型推論の動作確認
+const allPosts = await getCollection('blog');
+
+// TypeScriptによる型チェック
+allPosts.forEach((post) => {
+	const title: string = post.data.title; // ✅ 型安全
+	const tags: string[] = post.data.tags; // ✅ 型安全
+	const draft: boolean = post.data.draft; // ✅ 型安全
+});
+---
+
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Content Collections 動作確認</title>
+	</head>
+	<body>
+		<h1>Content Collections 動作確認</h1>
+		<ul>
+			{
+				allPosts.map((post) => (
+					<li>
+						{post.data.title} - {post.data.tags.join(', ')}
+					</li>
+				))
+			}
+		</ul>
+	</body>
+</html>
