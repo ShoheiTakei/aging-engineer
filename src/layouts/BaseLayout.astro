@@ -13,6 +13,8 @@
  * 信頼性: 🔵 requirements.md・architecture.mdより
  */
 
+import '../styles/global.css';
+
 interface Props {
 	/** ページタイトル（必須） */
 	title: string;
@@ -42,9 +44,6 @@ const { title, description, ogUrl, ogType = 'website' } = Astro.props;
 		<meta property="og:description" content={description} />
 		<meta property="og:type" content={ogType} />
 		{ogUrl && <meta property="og:url" content={ogUrl} />}
-
-		<!-- グローバルスタイル (TASK-0002) -->
-		<link rel="stylesheet" href="/src/styles/global.css" />
 	</head>
 	<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 		<!-- メインコンテンツ (NFR-301: セマンティックHTML) -->
