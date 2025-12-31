@@ -35,6 +35,47 @@ const { title, description, ogUrl, ogType = 'website' } = Astro.props;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+		<!--
+			【テーマ初期化スクリプト】（TASK-0005対応）
+			- フラッシュ防止: ページ読み込み時のちらつきを防止するため、head内でis:inlineで即時実行
+			- localStorage: ユーザーの以前の選択を復元
+			- prefers-color-scheme: システム設定をフォールバックとして使用
+			- デフォルト: ダークモード（tech-stack.md要件）
+			🔵 信頼性レベル: テストケース定義書、要件定義書に基づく実装
+		-->
+		<script is:inline>
+			// 【テーマ初期化処理】: ページ読み込み時に即座に実行
+			(function() {
+				// 【localStorage確認】: 以前のユーザー選択を確認
+				var storedTheme = localStorage.getItem('theme');
+
+				// 【システム設定確認】: ユーザーのOSのダークモード設定を確認
+				var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+				// 【テーマ決定ロジック】:
+				// 優先順位: localStorage > システム設定 > デフォルト（ダークモード）
+				// 1. localStorageに'light'が設定 → ライトモード
+				// 2. localStorageに'dark'が設定 → ダークモード
+				// 3. localStorage未設定でシステムがライト → ライトモード
+				// 4. それ以外 → ダークモード（tech-stack.md要件）
+
+				// 【クラス適用】: html要素にdarkクラスを追加/削除
+				if (storedTheme === 'light') {
+					// ユーザーが明示的にライトモードを選択
+					document.documentElement.classList.remove('dark');
+				} else if (storedTheme === 'dark') {
+					// ユーザーが明示的にダークモードを選択
+					document.documentElement.classList.add('dark');
+				} else if (!prefersDark) {
+					// localStorage未設定 & システムがライトモード → システム設定を尊重
+					document.documentElement.classList.remove('dark');
+				} else {
+					// ダークモード（デフォルト）: システムがダークまたは未設定の場合
+					document.documentElement.classList.add('dark');
+				}
+			})();
+		</script>
+
 		<!-- SEOメタタグ (NFR-101) -->
 		<title>{title}</title>
 		<meta name="description" content={description} />

@@ -5,6 +5,13 @@
 @import "tailwindcss";
 
 /**
+ * ダークモード設定 - クラスベースに変更
+ * Tailwind v4ではデフォルトでprefers-color-schemeを使用するが、
+ * .darkクラスによる切り替えを有効にするためcustom-variantを定義
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/**
  * カスタムベーススタイル
  * NFR-301: セマンティックHTML、WCAG 2.1 AA準拠
  */

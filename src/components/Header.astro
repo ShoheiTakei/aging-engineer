@@ -22,6 +22,13 @@
  * - 全テストケースを通過する最小限の実装
  */
 
+/**
+ * 【ThemeToggleコンポーネントインポート】（TASK-0005対応）
+ * ダークモード切り替えボタンをヘッダーに配置するためにインポート
+ * 🔵 信頼性レベル: TASK-0005要件定義書に基づく実装
+ */
+import ThemeToggle from './ThemeToggle.astro';
+
 interface Props {
   /**
    * サイトタイトル（必須）
@@ -123,7 +130,23 @@ const navItems = [
       </h1>
 
       <!--
-        【メインナビゲーション】
+        【ナビゲーションとテーマ切り替えコンテナ】
+        ナビゲーションとThemeToggleボタンを横並びで配置
+        🔵 信頼性レベル: TASK-0005要件定義書に基づく実装
+      -->
+      <div class="flex items-center gap-4">
+        <!--
+          【テーマ切り替えボタン】（TASK-0005対応）
+          ダークモード/ライトモードを切り替えるトグルボタン
+          - localStorage連携によるテーマ状態の永続化
+          - システム設定（prefers-color-scheme）との連携
+          - WCAG 2.1 AA準拠のアクセシビリティ
+          🔵 信頼性レベル: TASK-0005要件定義書に基づく実装
+        -->
+        <ThemeToggle />
+
+        <!--
+          【メインナビゲーション】
         セマンティックHTMLとして<nav>タグを使用（NFR-301）
 
         【アクセシビリティ】:
@@ -189,6 +212,7 @@ const navItems = [
           }
         </ul>
       </nav>
+      </div>
     </div>
   </div>
 </header>
