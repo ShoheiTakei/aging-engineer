@@ -109,45 +109,45 @@
    * 4. html.classList.add/removeで表示を更新
    *
    * 🔵 信頼性レベル: TC-TT-501～TC-TT-505テストケースに基づく実装
+   *
+   * 【注意】: Astroはスクリプトをtype="module"としてビルドするため、
+   * 自動的にDOMパース完了後に実行される（defer相当）。
+   * そのためDOMContentLoadedは不要。
    */
 
-  // 【DOM読み込み完了後に実行】: Astroのスクリプトホイスティング対策
-  // DOMContentLoadedで確実にDOM要素が存在してから実行
-  document.addEventListener('DOMContentLoaded', () => {
-    // 【ボタン要素取得】: data-theme-toggle属性で識別
-    const themeToggleButton = document.querySelector('[data-theme-toggle]');
+  // 【ボタン要素取得】: data-theme-toggle属性で識別
+  const themeToggleButton = document.querySelector('[data-theme-toggle]');
 
-    // 【クリックイベントハンドラ登録】: TC-TT-504対応
-    themeToggleButton?.addEventListener('click', () => {
-      // 【現在のテーマ取得】: html要素のdarkクラスの有無で判定
-      const isDark = document.documentElement.classList.contains('dark');
+  // 【クリックイベントハンドラ登録】: TC-TT-504対応
+  themeToggleButton?.addEventListener('click', () => {
+    // 【現在のテーマ取得】: html要素のdarkクラスの有無で判定
+    const isDark = document.documentElement.classList.contains('dark');
 
-      // 【テーマ切り替え】: TC-TT-505対応 - classList.add/remove/toggleを使用
-      if (isDark) {
-        document.documentElement.classList.remove('dark');
-        // 【状態保存】: TC-TT-502対応 - localStorageにテーマを保存
-        localStorage.setItem('theme', 'light');
-      } else {
+    // 【テーマ切り替え】: TC-TT-505対応 - classList.add/remove/toggleを使用
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      // 【状態保存】: TC-TT-502対応 - localStorageにテーマを保存
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  });
+
+  // 【システム設定検出】: TC-TT-503対応 - matchMedia/prefers-color-schemeを使用
+  // システム設定の変更をリアルタイムで検出し、ユーザーが明示的にテーマを設定していない場合に反映
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  // 【システム設定変更リスナー】: TC-INT-103対応 - システム設定変更時にテーマを更新
+  prefersDark.addEventListener('change', (e) => {
+    // localStorageにユーザー設定がない場合のみシステム設定に追従
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === null) {
+      if (e.matches) {
         document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
-    });
-
-    // 【システム設定検出】: TC-TT-503対応 - matchMedia/prefers-color-schemeを使用
-    // システム設定の変更をリアルタイムで検出し、ユーザーが明示的にテーマを設定していない場合に反映
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-
-    // 【システム設定変更リスナー】: TC-INT-103対応 - システム設定変更時にテーマを更新
-    prefersDark.addEventListener('change', (e) => {
-      // localStorageにユーザー設定がない場合のみシステム設定に追従
-      const storedTheme = localStorage.getItem('theme');
-      if (storedTheme === null) {
-        if (e.matches) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }
-    });
+    }
   });
 </script>
