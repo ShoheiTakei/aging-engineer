@@ -1,0 +1,194 @@
+---
+/**
+ * Header - ヘッダーコンポーネント
+ *
+ * 【機能概要】: サイト全体で共通のヘッダーとナビゲーションを提供
+ * 【改善内容】: Refactorフェーズで日本語コメントを強化し、設計判断の理由を明確化
+ * 【実装方針】: セマンティックHTMLとWCAG 2.1 AA準拠のアクセシビリティを実現
+ * 【設計方針】: ゼロJavaScript、SSG専用、Islands Architecture活用による最高のパフォーマンス
+ * 【パフォーマンス】: ビルド時静的生成により実行時オーバーヘッドゼロ、Lighthouse 90+点対応
+ * 【保守性】: Props型定義による型安全性、Tailwind CSSによる一貫したスタイリング
+ * 🔵 信頼性レベル: note.md、要件定義書、テストケース定義書に基づく実装
+ *
+ * 関連要件:
+ * - NFR-301: セマンティックHTML（<header>, <nav>）使用
+ * - NFR-302: キーボードナビゲーション対応（Tab, Enter, Space）
+ * - NFR-303: ARIAラベル（aria-label, aria-current）設定
+ * - NFR-304: フォーカス可視化（focus-visible:ring-2）
+ * - NFR-001: Lighthouse 90+点（ゼロJavaScript、SSG専用）
+ *
+ * テスト対応:
+ * - Header.test.ts: 16個のテストケース（正常系、異常系、アクセシビリティ、スタイリング）
+ * - 全テストケースを通過する最小限の実装
+ */
+
+interface Props {
+  /**
+   * サイトタイトル（必須）
+   * 【用途】: ヘッダーに表示されるサイトのタイトル
+   * 【制約】: 必須項目、空文字列は不可
+   * 【表示制御】: 長いタイトルは`truncate`クラスで省略表示
+   * 【セキュリティ】: Astroのデフォルトエスケープ処理により自動的にHTMLエスケープ
+   * 🔵 信頼性レベル: note.mdの要件定義より
+   */
+  siteTitle: string;
+
+  /**
+   * 現在のページパス（任意）
+   * 【用途】: ナビゲーションの現在位置をaria-currentでハイライト表示
+   * 【デフォルト値】: '/'（ホームページ）
+   * 【動作】: currentPathと一致するナビゲーション項目にaria-current="page"を設定
+   * 【アクセシビリティ】: スクリーンリーダーが現在位置を正しく読み上げる
+   * 🔵 信頼性レベル: note.md、NFR-303要件より
+   */
+  currentPath?: string;
+}
+
+/**
+ * 【Props取得と初期化】
+ * - siteTitle: 必須項目、TypeScriptによる型安全性確保
+ * - currentPath: デフォルト値'/'を設定し、未指定時はホームページをアクティブ表示
+ * 【設計判断】: デフォルト値により、Props未指定時の動作を明確化（TC-H-102対応）
+ * 🔵 信頼性レベル: テストケース定義書に基づく実装
+ */
+const { siteTitle, currentPath = '/' } = Astro.props;
+
+/**
+ * 【ナビゲーション項目定義】
+ * サイト全体で使用するナビゲーションリンクの配列
+ *
+ * 【項目構成】:
+ * - ホーム: サイトトップページ
+ * - ブログ: 記事一覧ページ
+ * - タグ: タグ別記事一覧ページ
+ * - 検索: 記事検索ページ
+ * - RSS: RSSフィード（REQ-601対応）
+ *
+ * 【設計判断】:
+ * - 静的配列により、外部入力によるインジェクション攻撃を防止
+ * - 配列構造により、将来的なナビゲーション項目の追加・削除が容易
+ * - テストケース（TC-H-003）で要求される5つの必須リンクを実装
+ *
+ * 【保守性】:
+ * - 新規ナビゲーション項目の追加は配列への要素追加のみで対応可能
+ * - 各項目は`{ href, label }`の一貫した構造を持ち、可読性が高い
+ *
+ * 🔵 信頼性レベル: note.md、テストケース定義書に基づく実装
+ */
+const navItems = [
+  { href: '/', label: 'ホーム' },
+  { href: '/blog', label: 'ブログ' },
+  { href: '/tags', label: 'タグ' },
+  { href: '/search', label: '検索' },
+  { href: '/rss.xml', label: 'RSS' },
+];
+---
+
+<!--
+  【ヘッダー要素】
+  セマンティックHTMLとして<header>タグを使用（NFR-301）
+
+  【スタイリング方針】:
+  - ライトモード: bg-white（白背景）、border-gray-200（グレー境界線）
+  - ダークモード: dark:bg-gray-800（ダークグレー背景）、dark:border-gray-700（ダークグレー境界線）
+  - 下部境界線: border-b（視覚的な区切り線）
+
+  【レスポンシブ対応】: container-wideクラスで最大幅7xlに制限、px-4で左右余白確保
+
+  🔵 信頼性レベル: note.md、NFR-301要件に基づく実装
+-->
+<header
+  class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+>
+  <div class="container-wide py-4">
+    <div class="flex items-center justify-between">
+      <!--
+        【サイトタイトル表示】
+        h1タグでサイトタイトルを表示（SEO対策）
+
+        【スタイリング】:
+        - フォントサイズ: text-xl（デフォルト）、md:text-2xl（中画面以上）
+        - フォント太さ: font-bold（太字）
+        - 文字色: text-gray-900（ライト）、dark:text-gray-100（ダーク）
+        - 長いタイトル対策: truncate（省略表示、TC-H-104対応）
+
+        【アクセシビリティ】: h1タグによりスクリーンリーダーがサイトタイトルを認識
+
+        🔵 信頼性レベル: テストケース定義書（TC-H-104）に基づく実装
+      -->
+      <h1
+        class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate"
+      >
+        {siteTitle}
+      </h1>
+
+      <!--
+        【メインナビゲーション】
+        セマンティックHTMLとして<nav>タグを使用（NFR-301）
+
+        【アクセシビリティ】:
+        - aria-label="メインナビゲーション": スクリーンリーダーがナビゲーションの役割を認識（NFR-303）
+        - <ul><li>構造: ナビゲーション項目を意味的に正しく構造化
+
+        【レスポンシブ対応】:
+        - gap-4（デフォルト）: 項目間の間隔16px
+        - md:gap-6（中画面以上）: 項目間の間隔24px
+
+        🔵 信頼性レベル: note.md、NFR-301、NFR-303要件に基づく実装
+      -->
+      <nav aria-label="メインナビゲーション">
+        <ul class="flex gap-4 md:gap-6">
+          {
+            /**
+             * 【ナビゲーションリンク生成ループ】
+             * navItems配列の各項目をループしてナビゲーションリンクを生成
+             *
+             * 【処理フロー】:
+             * 1. navItems配列を反復処理
+             * 2. 各項目から href（リンク先URL）と label（表示テキスト）を取得
+             * 3. currentPathと一致する項目にaria-current="page"を設定
+             * 4. <li><a>構造でリンクを生成
+             *
+             * 🔵 信頼性レベル: テストケース定義書（TC-H-003）に基づく実装
+             */
+            navItems.map((item) => (
+              <li>
+                {/**
+                 * 【ナビゲーションリンク】
+                 *
+                 * 【キーボードナビゲーション】:
+                 * - <a>タグ使用により、Tabキーでフォーカス移動可能（NFR-302）
+                 * - Enterキー、Spaceキーでリンク遷移可能（NFR-302）
+                 *
+                 * 【アクセシビリティ】:
+                 * - aria-current="page": 現在のページを示す（NFR-303、TC-H-004対応）
+                 * - currentPathと一致する項目のみに設定、それ以外はundefined
+                 *
+                 * 【フォーカス可視化】（NFR-304、TC-H-203対応）:
+                 * - focus:outline-none: デフォルトのアウトラインを無効化
+                 * - focus-visible:ring-2: キーボードフォーカス時にリング表示
+                 * - focus-visible:ring-blue-500: 青色のリング（WCAG 2.1 AA準拠）
+                 * - focus-visible:ring-offset-2: リングのオフセット
+                 *
+                 * 【スタイリング】:
+                 * - 文字色: text-gray-700（ライト）、dark:text-gray-300（ダーク）
+                 * - ホバー色: hover:text-blue-600（ライト）、dark:hover:text-blue-400（ダーク）
+                 * - トランジション: transition-colors duration-200（滑らかな色変化）
+                 *
+                 * 🔵 信頼性レベル: note.md、NFR-302～NFR-304要件、テストケース定義書に基づく実装
+                 */}
+                <a
+                  href={item.href}
+                  aria-current={currentPath === item.href ? 'page' : undefined}
+                  class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors duration-200"
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>

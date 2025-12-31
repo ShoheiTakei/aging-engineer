@@ -6,11 +6,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const allPosts = await getCollection('blog');
 
 // TypeScriptによる型チェック（型安全性を確認）
-allPosts.forEach((post) => {
-	const title: string = post.data.title; // ✅ 型安全
-	const tags: string[] = post.data.tags; // ✅ 型安全
-	const draft: boolean = post.data.draft; // ✅ 型安全
-});
+for (const post of allPosts) {
+  const title: string = post.data.title; // ✅ 型安全
+  const tags: string[] = post.data.tags; // ✅ 型安全
+  const draft: boolean = post.data.draft; // ✅ 型安全
+}
 ---
 
 <BaseLayout

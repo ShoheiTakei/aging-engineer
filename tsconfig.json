@@ -14,5 +14,5 @@
       "@utils/*": ["src/utils/*"]
     }
   },
-  "exclude": ["docs/**/*", "node_modules"]
+  "exclude": ["docs/**/*", "node_modules", "vitest.config.ts"]
 }

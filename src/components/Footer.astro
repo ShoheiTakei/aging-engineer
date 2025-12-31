@@ -1,0 +1,176 @@
+---
+/**
+ * Footer - フッターコンポーネント
+ *
+ * 【機能概要】: サイト全体で共通のフッター情報（コピーライト、ナビゲーション）を提供
+ * 【改善内容】: Refactorフェーズで日本語コメントを強化し、設計判断の理由を明確化
+ * 【実装方針】: セマンティックHTMLとWCAG 2.1 AA準拠のアクセシビリティを実現
+ * 【設計方針】: ゼロJavaScript、SSG専用、Islands Architecture活用による最高のパフォーマンス
+ * 【パフォーマンス】: ビルド時静的生成により実行時オーバーヘッドゼロ、Lighthouse 90+点対応
+ * 【保守性】: Props型定義による型安全性、Tailwind CSSによる一貫したスタイリング
+ * 🔵 信頼性レベル: note.md、要件定義書、テストケース定義書に基づく実装
+ *
+ * 関連要件:
+ * - NFR-301: セマンティックHTML（<footer>）使用
+ * - NFR-303: ARIAラベル（aria-label）設定
+ * - NFR-304: フォーカス可視化（focus-visible:ring-2）
+ * - REQ-601: RSSフィードリンク提供
+ * - NFR-001: Lighthouse 90+点（ゼロJavaScript、SSG専用）
+ *
+ * テスト対応:
+ * - Footer.test.ts: 11個のテストケース（正常系、異常系、アクセシビリティ、スタイリング）
+ * - 全テストケースを通過する最小限の実装
+ */
+
+interface Props {
+  /**
+   * サイト名（必須）
+   * 【用途】: コピーライト表記に使用されるサイト名
+   * 【制約】: 必須項目、空文字列は不可
+   * 【表示形式】: "© {copyrightYear} {siteName}. All rights reserved." の形式で表示
+   * 【セキュリティ】: Astroのデフォルトエスケープ処理により自動的にHTMLエスケープ
+   * 🔵 信頼性レベル: note.mdの要件定義より
+   */
+  siteName: string;
+
+  /**
+   * 著作権年（任意）
+   * 【用途】: コピーライト表記の年を指定
+   * 【デフォルト値】: new Date().getFullYear()（現在年）
+   * 【動作】: 未指定時は自動的に現在年を表示（TC-F-102対応）
+   * 【使用例】: 固定の年を表示したい場合に指定（例: "2023-2025"）
+   * 🟡 信頼性レベル: 一般的なフッター要件から妥当な推測
+   */
+  copyrightYear?: string;
+}
+
+/**
+ * 【Props取得と初期化】
+ * - siteName: 必須項目、TypeScriptによる型安全性確保
+ * - copyrightYear: デフォルト値として現在年を自動取得し設定
+ *
+ * 【設計判断】:
+ * - デフォルト値により、Props未指定時の動作を明確化（TC-F-102対応）
+ * - new Date().getFullYear()を使用し、年の更新を自動化
+ * - toString()で文字列型に変換（テンプレート内での使用に適した型）
+ *
+ * 🔵 信頼性レベル: テストケース定義書に基づく実装
+ */
+const { siteName, copyrightYear = new Date().getFullYear().toString() } = Astro.props;
+---
+
+<!--
+  【フッター要素】
+  セマンティックHTMLとして<footer>タグを使用（NFR-301、TC-F-201対応）
+
+  【スタイリング方針】:
+  - ライトモード: bg-gray-50（薄いグレー背景）、border-gray-200（グレー境界線）
+  - ダークモード: dark:bg-gray-800（ダークグレー背景）、dark:border-gray-700（ダークグレー境界線）
+  - 上部境界線: border-t（視覚的な区切り線）
+  - レイアウト: mt-auto（Flexboxコンテナ内で下部に配置）
+
+  【レスポンシブ対応】: container-wideクラスで最大幅7xlに制限、px-4で左右余白確保
+
+  🔵 信頼性レベル: note.md、NFR-301要件に基づく実装
+-->
+<footer
+  class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto"
+>
+  <div class="container-wide py-8">
+    <!--
+      【フッターコンテンツレイアウト】
+
+      【レスポンシブデザイン】:
+      - デフォルト: flex-col（縦方向配置）
+      - 中画面以上: md:flex-row（横方向配置）
+      - justify-between: 両端揃え
+      - items-center: 垂直方向中央揃え
+      - gap-4: 要素間の間隔16px
+
+      【設計判断】:
+      - モバイルでは縦方向配置で可読性を優先
+      - デスクトップでは横方向配置でスペース効率を優先
+      - 両端揃えによりコピーライトとナビゲーションを視覚的に分離
+
+      🔵 信頼性レベル: レスポンシブデザインのベストプラクティスに基づく実装
+    -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+      <!--
+        【コピーライト表記】
+
+        【表示内容】:
+        - © {copyrightYear} {siteName}. All rights reserved.
+        - copyrightYear: Props指定値または現在年（自動）
+        - siteName: Props必須項目
+
+        【スタイリング】:
+        - 文字色: text-gray-600（ライト）、dark:text-gray-400（ダーク）
+        - フォントサイズ: text-sm（14px、フッターとして適切なサイズ）
+
+        【セキュリティ】:
+        - siteName、copyrightYearは自動的にHTMLエスケープされる（XSS対策、TC-F-104対応）
+
+        🔵 信頼性レベル: note.md、テストケース定義書（TC-F-003）に基づく実装
+      -->
+      <p class="text-gray-600 dark:text-gray-400 text-sm">
+        © {copyrightYear}
+        {siteName}. All rights reserved.
+      </p>
+
+      <!--
+        【フッターナビゲーション】
+        セマンティックHTMLとして<nav>タグを使用（NFR-301）
+
+        【アクセシビリティ】:
+        - aria-label="フッターナビゲーション": スクリーンリーダーがナビゲーションの役割を認識（NFR-303、TC-F-202対応）
+        - メインナビゲーションと区別するため「フッター」を明示
+        - <ul><li>構造: ナビゲーション項目を意味的に正しく構造化
+
+        【将来の拡張性】:
+        - 現在はRSSリンクのみだが、SNSリンク、サイトマップリンクなどの追加が容易
+        - 配列構造への変更も検討可能
+
+        🔵 信頼性レベル: note.md、NFR-301、NFR-303要件に基づく実装
+      -->
+      <nav aria-label="フッターナビゲーション">
+        <ul class="flex gap-4">
+          <li>
+            {/**
+             * 【RSSフィードリンク】
+             *
+             * 【機能】:
+             * - RSSフィード（/rss.xml）へのリンクを提供（REQ-601、TC-F-004対応）
+             *
+             * 【キーボードナビゲーション】:
+             * - <a>タグ使用により、Tabキーでフォーカス移動可能（NFR-302）
+             * - Enterキー、Spaceキーでリンク遷移可能（NFR-302）
+             *
+             * 【フォーカス可視化】（NFR-304）:
+             * - focus:outline-none: デフォルトのアウトラインを無効化
+             * - focus-visible:ring-2: キーボードフォーカス時にリング表示
+             * - focus-visible:ring-blue-500: 青色のリング（WCAG 2.1 AA準拠）
+             * - focus-visible:ring-offset-2: リングのオフセット
+             *
+             * 【スタイリング】:
+             * - 文字色: text-gray-600（ライト）、dark:text-gray-400（ダーク）
+             * - ホバー色: hover:text-blue-600（ライト）、dark:hover:text-blue-400（ダーク）
+             * - フォントサイズ: text-sm（14px、フッターとして適切なサイズ）
+             * - トランジション: transition-colors duration-200（滑らかな色変化）
+             *
+             * 【セキュリティ】:
+             * - 静的パス"/rss.xml"を使用し、外部入力によるインジェクション攻撃を防止
+             *
+             * 🔵 信頼性レベル: note.md、REQ-601、NFR-302～NFR-304要件、テストケース定義書に基づく実装
+             */}
+            <a
+              href="/rss.xml"
+              class="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors duration-200 text-sm"
+            >
+              RSS
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</footer>
