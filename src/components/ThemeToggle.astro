@@ -131,7 +131,19 @@
   });
 
   // 【システム設定検出】: TC-TT-503対応 - matchMedia/prefers-color-schemeを使用
-  // 注: この初期化ロジックはBaseLayoutのhead内スクリプトで実行される
-  // ここではシステム設定検出のコード存在をテストに示すために含める
+  // システム設定の変更をリアルタイムで検出し、ユーザーが明示的にテーマを設定していない場合に反映
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  // 【システム設定変更リスナー】: TC-INT-103対応 - システム設定変更時にテーマを更新
+  prefersDark.addEventListener('change', (e) => {
+    // localStorageにユーザー設定がない場合のみシステム設定に追従
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === null) {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  });
 </script>
