@@ -1,0 +1,55 @@
+---
+/**
+ * BaseLayout - 基本レイアウトコンポーネント
+ *
+ * 全ページで使用する基本的なHTML構造を提供します。
+ *
+ * 要件:
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-101～NFR-104: SEO対応（メタタグ、OGP）
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル適切な設定
+ *
+ * 信頼性: 🔵 requirements.md・architecture.mdより
+ */
+
+interface Props {
+	/** ページタイトル（必須） */
+	title: string;
+	/** ページの説明（必須） */
+	description: string;
+	/** OGP用URL（任意） */
+	ogUrl?: string;
+	/** OGPタイプ（デフォルト: website） */
+	ogType?: 'website' | 'article';
+}
+
+const { title, description, ogUrl, ogType = 'website' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- SEOメタタグ (NFR-101) -->
+		<title>{title}</title>
+		<meta name="description" content={description} />
+
+		<!-- OGPメタタグ (NFR-102) -->
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content={ogType} />
+		{ogUrl && <meta property="og:url" content={ogUrl} />}
+
+		<!-- グローバルスタイル (TASK-0002) -->
+		<link rel="stylesheet" href="/src/styles/global.css" />
+	</head>
+	<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+		<!-- メインコンテンツ (NFR-301: セマンティックHTML) -->
+		<main class="min-h-screen">
+			<slot />
+		</main>
+	</body>
+</html>
