@@ -9,201 +9,198 @@
  */
 
 import { defineConfig } from 'vitest/config';
-import { getViteConfig } from 'astro/config';
 
-export default defineConfig(
-	getViteConfig({
-		test: {
-			// ========================================
-			// テスト環境設定
-			// ========================================
+export default defineConfig({
+  test: {
+    // ========================================
+    // テスト環境設定
+    // ========================================
 
-			/**
-			 * DOM環境
-			 * - happy-dom: 軽量・高速（推奨）
-			 * - jsdom: より完全なDOM実装（互換性が必要な場合）
-			 */
-			environment: 'happy-dom',
+    /**
+     * DOM環境
+     * - happy-dom: 軽量・高速（推奨）
+     * - jsdom: より完全なDOM実装（互換性が必要な場合）
+     */
+    environment: 'happy-dom',
 
-			/**
-			 * グローバルAPI
-			 * describe, it, expect等をインポートなしで使用可能
-			 */
-			globals: true,
+    /**
+     * グローバルAPI
+     * describe, it, expect等をインポートなしで使用可能
+     */
+    globals: true,
 
-			// ========================================
-			// テストファイル設定
-			// ========================================
+    // ========================================
+    // テストファイル設定
+    // ========================================
 
-			/**
-			 * テストファイルのパターン
-			 * - src配下の .test.ts ファイル: コンポーネントテスト（コロケーション）
-			 * - tests ディレクトリ配下の .test.ts ファイル: 単体テスト・コンポーネントテスト
-			 * - __tests__ ディレクトリ配下のファイル: Jest互換のディレクトリ構造
-			 */
-			include: [
-				'src/**/*.test.ts',
-				'src/**/*.test.tsx',
-				'tests/**/*.test.ts',
-				'tests/**/*.test.tsx',
-				'**/__tests__/**/*',
-			],
+    /**
+     * テストファイルのパターン
+     * - src配下の .test.ts ファイル: コンポーネントテスト（コロケーション）
+     * - tests ディレクトリ配下の .test.ts ファイル: 単体テスト・コンポーネントテスト
+     * - __tests__ ディレクトリ配下のファイル: Jest互換のディレクトリ構造
+     */
+    include: [
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'tests/**/*.test.ts',
+      'tests/**/*.test.tsx',
+      '**/__tests__/**/*',
+    ],
 
-			/**
-			 * 除外するファイル
-			 */
-			exclude: [
-				'node_modules',
-				'dist',
-				'.astro',
-				'tests/e2e/**/*', // E2EテストはPlaywrightで実行
-				'tests/fixtures/**/*', // テストデータ
-			],
+    /**
+     * 除外するファイル
+     */
+    exclude: [
+      'node_modules',
+      'dist',
+      '.astro',
+      'tests/e2e/**/*', // E2EテストはPlaywrightで実行
+      'tests/fixtures/**/*', // テストデータ
+    ],
 
-			// ========================================
-			// 並列実行設定
-			// ========================================
+    // ========================================
+    // 並列実行設定
+    // ========================================
 
-			/**
-			 * 並列実行の有効化
-			 * - pool: threads（推奨、高速）
-			 * - poolOptions: 並列実行のオプション
-			 */
-			pool: 'threads',
-			poolOptions: {
-				threads: {
-					singleThread: false, // 並列実行を有効化
-				},
-			},
+    /**
+     * 並列実行の有効化
+     * - pool: threads（推奨、高速）
+     * - poolOptions: 並列実行のオプション
+     */
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false, // 並列実行を有効化
+      },
+    },
 
-			/**
-			 * テストタイムアウト
-			 * 各テストケースのタイムアウト時間（ミリ秒）
-			 */
-			testTimeout: 10000,
+    /**
+     * テストタイムアウト
+     * 各テストケースのタイムアウト時間（ミリ秒）
+     */
+    testTimeout: 10000,
 
-			// ========================================
-			// カバレッジ設定
-			// ========================================
+    // ========================================
+    // カバレッジ設定
+    // ========================================
 
-			coverage: {
-				/**
-				 * カバレッジプロバイダ
-				 * - v8: 高速、Viteとの統合が良い（推奨）
-				 * - istanbul: より詳細なカバレッジ
-				 */
-				provider: 'v8',
+    coverage: {
+      /**
+       * カバレッジプロバイダ
+       * - v8: 高速、Viteとの統合が良い（推奨）
+       * - istanbul: より詳細なカバレッジ
+       */
+      provider: 'v8',
 
-				/**
-				 * カバレッジ対象
-				 */
-				include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.astro'],
+      /**
+       * カバレッジ対象
+       */
+      include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.astro'],
 
-				/**
-				 * カバレッジ除外
-				 */
-				exclude: [
-					'src/**/*.test.ts',
-					'src/**/*.spec.ts',
-					'src/**/*.d.ts',
-					'src/env.d.ts',
-					'src/**/__tests__/**',
-				],
+      /**
+       * カバレッジ除外
+       */
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        'src/**/*.d.ts',
+        'src/env.d.ts',
+        'src/**/__tests__/**',
+      ],
 
-				/**
-				 * カバレッジレポート形式
-				 * - text: ターミナルに表示
-				 * - html: coverage/index.html に詳細レポート
-				 * - json: coverage/coverage-final.json にJSON形式
-				 * - lcov: CI/CDツール（Codecov等）用
-				 */
-				reporter: ['text', 'html', 'json', 'lcov'],
+      /**
+       * カバレッジレポート形式
+       * - text: ターミナルに表示
+       * - html: coverage/index.html に詳細レポート
+       * - json: coverage/coverage-final.json にJSON形式
+       * - lcov: CI/CDツール（Codecov等）用
+       */
+      reporter: ['text', 'html', 'json', 'lcov'],
 
-				/**
-				 * カバレッジ閾値（品質基準）
-				 * tech-stack.mdの「テストカバレッジ: 80%以上」に準拠
-				 */
-				thresholds: {
-					lines: 80,
-					functions: 80,
-					branches: 75,
-					statements: 80,
-				},
+      /**
+       * カバレッジ閾値（品質基準）
+       * tech-stack.mdの「テストカバレッジ: 80%以上」に準拠
+       */
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 75,
+        statements: 80,
+      },
 
-				/**
-				 * カバレッジレポート出力先
-				 */
-				reportsDirectory: './coverage',
-			},
+      /**
+       * カバレッジレポート出力先
+       */
+      reportsDirectory: './coverage',
+    },
 
-			// ========================================
-			// モック設定
-			// ========================================
+    // ========================================
+    // モック設定
+    // ========================================
 
-			/**
-			 * setupファイル
-			 * テスト実行前に読み込むセットアップファイル
-			 */
-			// setupFiles: ['./tests/setup.ts'],
+    /**
+     * setupファイル
+     * テスト実行前に読み込むセットアップファイル
+     */
+    // setupFiles: ['./tests/setup.ts'],
 
-			/**
-			 * グローバルセットアップ
-			 * すべてのテストスイート実行前に1度だけ実行
-			 */
-			// globalSetup: './tests/globalSetup.ts',
+    /**
+     * グローバルセットアップ
+     * すべてのテストスイート実行前に1度だけ実行
+     */
+    // globalSetup: './tests/globalSetup.ts',
 
-			// ========================================
-			// レポート設定
-			// ========================================
+    // ========================================
+    // レポート設定
+    // ========================================
 
-			/**
-			 * レポーター
-			 * - default: 標準出力
-			 * - verbose: 詳細出力
-			 * - dot: シンプルな進捗表示
-			 * - json: JSON形式（CI/CD用）
-			 * - junit: JUnit XML形式（CI/CD用）
-			 */
-			reporters: ['default'],
+    /**
+     * レポーター
+     * - default: 標準出力
+     * - verbose: 詳細出力
+     * - dot: シンプルな進捗表示
+     * - json: JSON形式（CI/CD用）
+     * - junit: JUnit XML形式（CI/CD用）
+     */
+    reporters: ['default'],
 
-			// ========================================
-			// ウォッチモード設定
-			// ========================================
+    // ========================================
+    // ウォッチモード設定
+    // ========================================
 
-			/**
-			 * ウォッチモードのファイル監視除外
-			 */
-			watchExclude: [
-				'node_modules/**',
-				'dist/**',
-				'.astro/**',
-				'coverage/**',
-				'test-results/**',
-			],
-		},
+    /**
+     * ウォッチモードのファイル監視除外
+     */
+    watchExclude: [
+      'node_modules/**',
+      'dist/**',
+      '.astro/**',
+      'coverage/**',
+      'test-results/**',
+    ],
+  },
 
-		// ========================================
-		// Vite設定（パス解決等）
-		// ========================================
+  // ========================================
+  // Vite設定（パス解決等）
+  // ========================================
 
-		resolve: {
-			alias: {
-				'@': '/src',
-				'@/components': '/src/components',
-				'@/layouts': '/src/layouts',
-				'@/utils': '/src/utils',
-				'@/content': '/src/content',
-			},
-		},
+  resolve: {
+    alias: {
+      '@': '/src',
+      '@/components': '/src/components',
+      '@/layouts': '/src/layouts',
+      '@/utils': '/src/utils',
+      '@/content': '/src/content',
+    },
+  },
 
-		// ========================================
-		// 環境変数設定（テスト用）
-		// ========================================
+  // ========================================
+  // 環境変数設定（テスト用）
+  // ========================================
 
-		define: {
-			'import.meta.env.PUBLIC_R2_URL': JSON.stringify(
-				process.env.PUBLIC_R2_URL || 'https://test-r2-url.com'
-			),
-		},
-	})
-);
+  define: {
+    'import.meta.env.PUBLIC_R2_URL': JSON.stringify(
+      process.env.PUBLIC_R2_URL || 'https://test-r2-url.com',
+    ),
+  },
+});
