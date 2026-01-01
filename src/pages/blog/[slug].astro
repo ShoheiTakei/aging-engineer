@@ -1,0 +1,225 @@
+---
+/**
+ * [slug].astro - 記事詳細ページ
+ *
+ * 【機能概要】: 個別記事の詳細表示ページを提供
+ * 【改善内容】: TDDで実装。ユーティリティ関数を活用した構造化されたページ
+ * 【実装方針】: Content Collections APIを使用した型安全なMarkdownレンダリング
+ * 【設計方針】: ゼロJavaScript（目次のスムーズスクロール除く）、SSG専用
+ * 【パフォーマンス】: ビルド時静的生成により実行時オーバーヘッドゼロ
+ * 【保守性】: コンポーネント分離、ユーティリティ関数の活用
+ * 🔵 信頼性レベル: REQ-102、requirements.md、architecture.mdに基づく実装
+ *
+ * 関連要件:
+ * - REQ-102: 記事詳細表示
+ * - REQ-001: frontmatterでpubDate, updatedDateを管理
+ * - REQ-801: 読了時間を自動計算して表示
+ * - REQ-901: 記事の見出し（h2, h3）から目次を自動生成
+ * - REQ-111: Shikiシンタックスハイライト対応
+ * - REQ-301: タグ表示
+ *
+ * テスト対応:
+ * - slug.test.ts: ヘルパー関数と統合テスト
+ */
+
+import { getCollection, render } from 'astro:content';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate } from '../../utils/date';
+import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
+import { generateTOC } from '../../utils/toc';
+
+/**
+ * 【getStaticPaths】: 静的パスの生成
+ * 【設計方針】: Content Collectionsから公開記事のみを取得し、slugベースでパスを生成
+ * 🔵 信頼性: architecture.md、Astro公式ドキュメントより
+ */
+export async function getStaticPaths() {
+  // 【記事取得】: Content Collectionsから全記事を取得
+  const posts = await getCollection('blog', ({ data }) => {
+    // 【下書き除外】: draft: trueの記事は除外
+    return data.draft !== true;
+  });
+
+  // 【パス生成】: 各記事のslugをパラメータとして返す
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+// 【Props取得】: getStaticPathsから渡された記事データを取得
+const { post } = Astro.props;
+
+// 【記事レンダリング】: MarkdownをHTMLにレンダリング
+const { Content, headings } = await render(post);
+
+// 【フロントマター取得】: 記事のメタデータを取得
+const { title, description, pubDate, updatedDate, tags = [], coverImage } = post.data;
+
+// 【読了時間計算】: 記事本文から読了時間を計算
+const readingTime = calculateReadingTime(post.body || '');
+const formattedReadingTime = formatReadingTime(readingTime);
+
+// 【目次生成】: 見出しから目次を生成
+const toc = generateTOC(headings);
+
+// 【日付フォーマット】: 日本語形式に変換
+const formattedPubDate = formatDate(pubDate);
+const formattedUpdatedDate = updatedDate ? formatDate(updatedDate) : null;
+
+// 【サイト設定】: サイト情報（将来的には設定ファイルから取得）
+const siteTitle = 'Aging Engineer Blog';
+const siteName = 'Aging Engineer';
+---
+
+<BaseLayout
+  title={`${title} | ${siteTitle}`}
+  description={description}
+  ogType="article"
+>
+  <Header siteTitle={siteTitle} currentPath={`/blog/${post.id}`} />
+
+  <article class="container-narrow py-8 md:py-12">
+    <!--
+      【記事ヘッダー】
+      タイトル、メタ情報（公開日、更新日、読了時間、タグ）を表示
+      🔵 信頼性: REQ-102、REQ-001、REQ-801より
+    -->
+    <header class="mb-8 md:mb-12">
+      <!-- カバー画像 -->
+      {coverImage && (
+        <div class="mb-6 md:mb-8">
+          <img
+            src={coverImage}
+            alt={`${title}のカバー画像`}
+            class="w-full h-auto rounded-lg shadow-md"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      <!-- タイトル -->
+      <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-tight">
+        {title}
+      </h1>
+
+      <!-- メタ情報 -->
+      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4 md:mb-6">
+        <!-- 公開日 -->
+        <time datetime={pubDate.toISOString()} class="flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>{formattedPubDate}</span>
+        </time>
+
+        <!-- 更新日（ある場合のみ表示） -->
+        {formattedUpdatedDate && (
+          <time datetime={updatedDate!.toISOString()} class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>更新: {formattedUpdatedDate}</span>
+          </time>
+        )}
+
+        <!-- 読了時間 -->
+        <span class="flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{formattedReadingTime}</span>
+        </span>
+      </div>
+
+      <!-- タグ一覧 -->
+      {tags.length > 0 && (
+        <div class="flex flex-wrap gap-2" aria-label="タグ一覧">
+          {tags.map((tag: string) => (
+            <a
+              href={`/tags/${encodeURIComponent(tag)}`}
+              class="inline-block px-3 py-1 text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <!--
+      【目次】
+      見出しがある場合のみ表示（EDGE-104対応）
+      🔵 信頼性: REQ-901、EDGE-104より
+    -->
+    {toc.hasContent && (
+      <nav
+        class="mb-8 md:mb-12 p-4 md:p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+        aria-label="目次"
+      >
+        <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+          目次
+        </h2>
+        <ul class="space-y-2">
+          {toc.items.map((item) => (
+            <li>
+              <a
+                href={`#${item.slug}`}
+                class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                {item.text}
+              </a>
+              {item.children.length > 0 && (
+                <ul class="ml-4 mt-2 space-y-1">
+                  {item.children.map((child) => (
+                    <li>
+                      <a
+                        href={`#${child.slug}`}
+                        class="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm"
+                      >
+                        {child.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    <!--
+      【記事本文】
+      Markdown→HTMLレンダリング結果を表示
+      Shikiシンタックスハイライトはastro.config.mjsで設定済み
+      🔵 信頼性: REQ-102、REQ-111より
+    -->
+    <div class="prose prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-20 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-code:before:content-none prose-code:after:content-none">
+      <Content />
+    </div>
+
+    <!--
+      【記事フッター】
+      記事終了の区切りとナビゲーション
+      🟡 信頼性: 一般的なブログ要件より
+    -->
+    <footer class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          記事一覧に戻る
+        </a>
+      </div>
+    </footer>
+  </article>
+
+  <Footer siteName={siteName} />
+</BaseLayout>
