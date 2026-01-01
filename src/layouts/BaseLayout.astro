@@ -85,6 +85,14 @@ const { title, description, ogUrl, ogType = 'website' } = Astro.props;
 		<meta property="og:description" content={description} />
 		<meta property="og:type" content={ogType} />
 		{ogUrl && <meta property="og:url" content={ogUrl} />}
+
+		<!-- RSS Feed (REQ-401) -->
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title="aging-engineer RSS Feed"
+			href="/rss.xml"
+		/>
 	</head>
 	<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 		<!-- メインコンテンツ (NFR-301: セマンティックHTML) -->
