@@ -1,0 +1,598 @@
+---
+/**
+ * Search - 検索ページコンポーネント
+ *
+ * TASK-0019: 検索ページの実装
+ *
+ * 【機能概要】: クライアントサイド検索機能を提供する検索ページ
+ * 【実装方針】: ビルド時に検索インデックスJSONを生成し、クライアントサイドでリアルタイム検索
+ * 【設計方針】: Islands Architecture活用、最小限のJavaScriptで高パフォーマンスを実現
+ * 【パフォーマンス】: 検索インデックスは遅延ロード、debounce処理でAPIコール最小化
+ *
+ * 関連要件:
+ * - REQ-401: 記事検索機能（タイトル・本文から全文検索、部分一致）
+ * - REQ-402: 検索結果を関連度順に表示
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル適切な設定
+ * - NFR-304: フォーカス可視化
+ * - EDGE-101: 検索結果0件の場合のメッセージ表示
+ *
+ * 関連文書:
+ * - アーキテクチャ設計: docs/design/blog-article-management/architecture.md
+ * - データフロー: docs/design/blog-article-management/dataflow.md
+ */
+
+import { getCollection } from 'astro:content';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { generateSearchIndex } from '../utils/search';
+
+// ========================================
+// 検索インデックス生成（ビルド時）
+// ========================================
+
+/**
+ * ブログ記事を取得し、検索インデックスを生成
+ * 下書き記事は除外
+ */
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+/**
+ * 検索インデックスを生成
+ * - ビルド時に実行され、クライアントサイドに渡される
+ * - 本文は500文字に制限（パフォーマンス最適化）
+ */
+const searchIndex = generateSearchIndex(
+  allPosts.map((post) => ({
+    slug: post.id,
+    data: post.data,
+    body: post.body || '',
+  })),
+  { bodyLength: 500 },
+);
+
+// 検索インデックスをJSON文字列に変換
+const searchIndexJson = JSON.stringify(searchIndex);
+
+// ページメタデータ
+const pageTitle = '記事検索 | Aging Engineer Blog';
+const pageDescription = 'ブログ記事を全文検索できます。タイトル、本文、タグから検索が可能です。';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <Header siteTitle="Aging Engineer Blog" currentPath="/search" />
+
+  <main class="container-wide py-8">
+    <!--
+      【検索セクション】
+      検索フォームと検索結果を含むメインコンテンツ
+      🔵 信頼性: REQ-401、NFR-301に基づく実装
+    -->
+    <section aria-labelledby="search-heading" class="max-w-3xl mx-auto">
+      <!--
+        【ページ見出し】
+        h1タグでページの主題を明示（SEO・アクセシビリティ対応）
+        🔵 信頼性: NFR-301セマンティックHTML
+      -->
+      <h1
+        id="search-heading"
+        class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+      >
+        記事検索
+      </h1>
+
+      <!--
+        【検索フォーム】
+        - role="search": 検索ランドマークを明示
+        - aria-label: スクリーンリーダー用の説明
+        🔵 信頼性: NFR-301、NFR-303に基づく実装
+      -->
+      <form role="search" aria-label="記事を検索" class="mb-8">
+        <div class="relative">
+          <!--
+            【検索入力フィールド】
+            - type="search": 検索入力であることを明示
+            - aria-label: アクセシビリティ対応
+            - aria-describedby: 入力ヒントへの参照
+            🔵 信頼性: NFR-302、NFR-303、NFR-304に基づく実装
+          -->
+          <input
+            type="search"
+            id="search-input"
+            name="q"
+            placeholder="キーワードを入力..."
+            aria-label="検索キーワード"
+            aria-describedby="search-hint"
+            class="w-full px-4 py-3 pl-12 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 placeholder-gray-500 dark:placeholder-gray-400"
+          />
+          <!--
+            【検索アイコン】
+            装飾的なSVGアイコン（aria-hidden="true"でスクリーンリーダーから除外）
+          -->
+          <svg
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        <!--
+          【入力ヒント】
+          検索の使い方を説明するテキスト
+          🔵 信頼性: ユーザビリティ向上
+        -->
+        <p
+          id="search-hint"
+          class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+        >
+          タイトル、本文、タグから検索できます
+        </p>
+      </form>
+
+      <!--
+        【検索結果エリア】
+        - aria-live="polite": 検索結果の変更をスクリーンリーダーに通知
+        - aria-atomic="true": 変更時に全体を読み上げ
+        🔵 信頼性: NFR-303アクセシビリティ対応
+      -->
+      <div
+        id="search-results"
+        aria-live="polite"
+        aria-atomic="true"
+        role="region"
+        aria-label="検索結果"
+      >
+        <!--
+          【初期状態メッセージ】
+          検索前の案内メッセージ
+        -->
+        <p
+          id="initial-message"
+          class="text-center text-gray-600 dark:text-gray-400 py-8"
+        >
+          検索キーワードを入力してください
+        </p>
+
+        <!--
+          【検索結果リスト】
+          検索結果が表示される場所（初期状態では非表示）
+        -->
+        <ul
+          id="results-list"
+          class="space-y-4 hidden"
+          aria-label="検索結果一覧"
+        >
+        </ul>
+
+        <!--
+          【結果なしメッセージ】
+          検索結果が0件の場合に表示（初期状態では非表示）
+          🔵 信頼性: EDGE-101対応
+        -->
+        <p
+          id="no-results"
+          class="text-center text-gray-600 dark:text-gray-400 py-8 hidden"
+        >
+          該当する記事が見つかりませんでした
+        </p>
+
+        <!--
+          【検索中インジケーター】
+          検索処理中に表示（初期状態では非表示）
+        -->
+        <p
+          id="loading-indicator"
+          class="text-center text-gray-600 dark:text-gray-400 py-8 hidden"
+        >
+          検索中...
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer siteName="Aging Engineer Blog" />
+</BaseLayout>
+
+<!--
+  【検索インデックスデータ】
+  ビルド時に生成された検索インデックスをクライアントに埋め込み
+  type="application/json"でパース可能なデータとして格納
+-->
+<script
+  id="search-index-data"
+  type="application/json"
+  set:html={searchIndexJson}
+/>
+
+<!--
+  【クライアントサイド検索スクリプト】
+  is:inline属性でバンドルせずそのまま出力（軽量化）
+  🔵 信頼性: REQ-401、REQ-402に基づく実装
+-->
+<script is:inline>
+  // ========================================
+  // 型定義（JSDocコメント形式）
+  // ========================================
+
+  /**
+   * @typedef {Object} SearchIndexItem
+   * @property {string} slug - 記事のslug
+   * @property {string} title - 記事タイトル
+   * @property {string} description - 記事説明
+   * @property {string} body - 本文（切り詰め済み）
+   * @property {string[]} tags - タグ配列
+   * @property {string} pubDate - 公開日（ISO 8601形式）
+   */
+
+  /**
+   * @typedef {Object} MatchInfo
+   * @property {'title' | 'description' | 'body' | 'tags'} field - マッチしたフィールド
+   * @property {Array<[number, number]>} indices - マッチ位置
+   */
+
+  /**
+   * @typedef {Object} SearchResult
+   * @property {SearchIndexItem} item - マッチしたアイテム
+   * @property {number} score - 関連度スコア
+   * @property {MatchInfo[]} matches - マッチ箇所情報
+   */
+
+  // ========================================
+  // 定数定義
+  // ========================================
+
+  /** 検索のdebounce時間（ミリ秒） */
+  const DEBOUNCE_DELAY = 200;
+
+  /** スコアリングの重み付け */
+  const SCORE_WEIGHTS = {
+    title: 10,
+    tags: 8,
+    description: 5,
+    body: 1,
+  };
+
+  // ========================================
+  // DOM要素の取得
+  // ========================================
+
+  /** @type {HTMLInputElement} */
+  const searchInput = document.getElementById('search-input');
+  const resultsList = document.getElementById('results-list');
+  const noResults = document.getElementById('no-results');
+  const initialMessage = document.getElementById('initial-message');
+  const loadingIndicator = document.getElementById('loading-indicator');
+
+  // ========================================
+  // 検索インデックスの読み込み
+  // ========================================
+
+  /** @type {SearchIndexItem[]} */
+  let searchIndex = [];
+
+  try {
+    const indexData = document.getElementById('search-index-data');
+    if (indexData) {
+      searchIndex = JSON.parse(indexData.textContent || '[]');
+    }
+  } catch (error) {
+    console.error('検索インデックスの読み込みに失敗しました:', error);
+  }
+
+  // ========================================
+  // 検索関数
+  // ========================================
+
+  /**
+   * テキスト内でクエリにマッチする位置を検索
+   * @param {string} text - 検索対象テキスト
+   * @param {string} query - 検索クエリ（小文字）
+   * @returns {Array<[number, number]>} マッチ位置の配列
+   */
+  function findMatches(text, query) {
+    const normalizedText = text.toLowerCase();
+    const matches = [];
+    let startIndex = 0;
+
+    while (true) {
+      const index = normalizedText.indexOf(query, startIndex);
+      if (index === -1) break;
+      matches.push([index, index + query.length]);
+      startIndex = index + 1;
+    }
+
+    return matches;
+  }
+
+  /**
+   * 検索を実行
+   * @param {string} query - 検索クエリ
+   * @returns {SearchResult[]} 検索結果
+   */
+  function searchArticles(query) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery || searchIndex.length === 0) {
+      return [];
+    }
+
+    const normalizedQuery = trimmedQuery.toLowerCase();
+    const results = [];
+
+    for (const item of searchIndex) {
+      const matches = [];
+      let score = 0;
+
+      // タイトルの検索
+      const titleMatches = findMatches(item.title, normalizedQuery);
+      if (titleMatches.length > 0) {
+        score += SCORE_WEIGHTS.title * titleMatches.length;
+        matches.push({ field: 'title', indices: titleMatches });
+      }
+
+      // タグの検索
+      const tagMatches = [];
+      for (const tag of item.tags) {
+        const tagMatch = findMatches(tag, normalizedQuery);
+        if (tagMatch.length > 0) {
+          tagMatches.push(...tagMatch);
+          score += SCORE_WEIGHTS.tags;
+        }
+      }
+      if (tagMatches.length > 0) {
+        matches.push({ field: 'tags', indices: tagMatches });
+      }
+
+      // 説明の検索
+      const descMatches = findMatches(item.description, normalizedQuery);
+      if (descMatches.length > 0) {
+        score += SCORE_WEIGHTS.description * descMatches.length;
+        matches.push({ field: 'description', indices: descMatches });
+      }
+
+      // 本文の検索
+      const bodyMatches = findMatches(item.body, normalizedQuery);
+      if (bodyMatches.length > 0) {
+        score += SCORE_WEIGHTS.body * bodyMatches.length;
+        matches.push({ field: 'body', indices: bodyMatches });
+      }
+
+      if (matches.length > 0) {
+        results.push({ item, score, matches });
+      }
+    }
+
+    // スコアの降順でソート
+    results.sort((a, b) => b.score - a.score);
+
+    return results;
+  }
+
+  // ========================================
+  // ハイライト表示関数
+  // ========================================
+
+  /**
+   * テキストにハイライトを適用
+   * @param {string} text - 元のテキスト
+   * @param {Array<[number, number]>} indices - ハイライト位置
+   * @returns {string} ハイライト適用後のHTML
+   */
+  function highlightText(text, indices) {
+    if (!indices || indices.length === 0) {
+      return escapeHtml(text);
+    }
+
+    // インデックスを開始位置でソート
+    const sortedIndices = [...indices].sort((a, b) => a[0] - b[0]);
+
+    let result = '';
+    let lastIndex = 0;
+
+    for (const [start, end] of sortedIndices) {
+      if (start > lastIndex) {
+        result += escapeHtml(text.slice(lastIndex, start));
+      }
+      result += `<mark class="bg-yellow-200 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-0.5 rounded">${escapeHtml(text.slice(start, end))}</mark>`;
+      lastIndex = end;
+    }
+
+    if (lastIndex < text.length) {
+      result += escapeHtml(text.slice(lastIndex));
+    }
+
+    return result;
+  }
+
+  /**
+   * HTMLエスケープ
+   * @param {string} text - エスケープ対象テキスト
+   * @returns {string} エスケープ後のテキスト
+   */
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ========================================
+  // UI更新関数
+  // ========================================
+
+  /**
+   * 検索結果をUIに反映
+   * @param {SearchResult[]} results - 検索結果
+   * @param {string} query - 検索クエリ
+   */
+  function updateResults(results, query) {
+    // 全要素を非表示
+    initialMessage.classList.add('hidden');
+    noResults.classList.add('hidden');
+    loadingIndicator.classList.add('hidden');
+    resultsList.classList.add('hidden');
+    resultsList.innerHTML = '';
+
+    if (!query.trim()) {
+      // クエリが空の場合は初期メッセージを表示
+      initialMessage.classList.remove('hidden');
+      return;
+    }
+
+    if (results.length === 0) {
+      // 結果なしの場合
+      noResults.classList.remove('hidden');
+      return;
+    }
+
+    // 検索結果を表示
+    resultsList.classList.remove('hidden');
+
+    for (const result of results) {
+      const item = result.item;
+      const li = document.createElement('li');
+
+      // タイトルのハイライト
+      const titleMatch = result.matches.find((m) => m.field === 'title');
+      const highlightedTitle = titleMatch
+        ? highlightText(item.title, titleMatch.indices)
+        : escapeHtml(item.title);
+
+      // 説明のハイライト
+      const descMatch = result.matches.find((m) => m.field === 'description');
+      const highlightedDesc = descMatch
+        ? highlightText(item.description, descMatch.indices)
+        : escapeHtml(item.description);
+
+      // 公開日のフォーマット
+      const pubDate = new Date(item.pubDate);
+      const formattedDate = pubDate.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      li.innerHTML = `
+        <article class="card p-4">
+          <a href="/blog/${item.slug}" class="block group">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
+              ${highlightedTitle}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">
+              ${formattedDate}
+            </p>
+            <p class="text-gray-700 dark:text-gray-300 line-clamp-2">
+              ${highlightedDesc}
+            </p>
+            ${
+              item.tags.length > 0
+                ? `
+              <div class="flex flex-wrap gap-2 mt-3">
+                ${item.tags
+                  .map(
+                    (tag) => `
+                  <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                    ${escapeHtml(tag)}
+                  </span>
+                `
+                  )
+                  .join('')}
+              </div>
+            `
+                : ''
+            }
+          </a>
+        </article>
+      `;
+
+      resultsList.appendChild(li);
+    }
+
+    // 検索結果数をスクリーンリーダー用に通知
+    const resultCount = document.createElement('p');
+    resultCount.className = 'sr-only';
+    resultCount.textContent = `${results.length}件の記事が見つかりました`;
+    resultsList.prepend(resultCount);
+  }
+
+  // ========================================
+  // デバウンス関数
+  // ========================================
+
+  /**
+   * デバウンス処理
+   * @param {Function} func - 実行する関数
+   * @param {number} wait - 待機時間（ミリ秒）
+   * @returns {Function} デバウンス済み関数
+   */
+  function debounce(func, wait) {
+    let timeoutId = null;
+    return function (...args) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, wait);
+    };
+  }
+
+  // ========================================
+  // イベントリスナー設定
+  // ========================================
+
+  /**
+   * 検索処理を実行
+   */
+  function handleSearch() {
+    const query = searchInput.value;
+    const results = searchArticles(query);
+    updateResults(results, query);
+  }
+
+  // デバウンス済みの検索処理
+  const debouncedSearch = debounce(handleSearch, DEBOUNCE_DELAY);
+
+  // 入力イベントで検索を実行
+  searchInput.addEventListener('input', debouncedSearch);
+
+  // フォーム送信を防止（Enterキー対応）
+  searchInput.closest('form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleSearch();
+  });
+
+  // URLパラメータから初期クエリを取得
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialQuery = urlParams.get('q');
+  if (initialQuery) {
+    searchInput.value = initialQuery;
+    handleSearch();
+  }
+</script>
+
+<!--
+  【スクリーンリーダー専用スタイル】
+  .sr-onlyクラスの定義
+-->
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+</style>
