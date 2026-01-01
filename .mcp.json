@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vibe_kanban": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "vibe-kanban@0.0.143",
+        "--mcp"
+      ],
+      "env": {}
+    }
+  }
+}
