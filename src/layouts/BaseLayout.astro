@@ -1,32 +1,32 @@
 ---
-/**
- * BaseLayout - 基本レイアウトコンポーネント
- *
- * 全ページで使用する基本的なHTML構造を提供します。
- *
- * 要件:
- * - NFR-301: セマンティックHTML使用
- * - NFR-101～NFR-104: SEO対応（メタタグ、OGP）
- * - NFR-302: キーボードナビゲーション対応
- * - NFR-303: ARIAラベル適切な設定
- *
- * 信頼性: 🔵 requirements.md・architecture.mdより
- */
-
 import '../styles/global.css';
+import SEO from '../components/SEO.astro';
 
 interface Props {
-  /** ページタイトル（必須） */
   title: string;
-  /** ページの説明（必須） */
   description: string;
-  /** OGP用URL（任意） */
   ogUrl?: string;
-  /** OGPタイプ（デフォルト: website） */
   ogType?: 'website' | 'article';
+  ogImage?: string;
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  tags?: string[];
+  canonicalUrl?: string;
+  noindex?: boolean;
 }
 
-const { title, description, ogUrl, ogType = 'website' } = Astro.props;
+const {
+  title,
+  description,
+  ogUrl,
+  ogType = 'website',
+  ogImage,
+  publishedTime,
+  modifiedTime,
+  tags,
+  canonicalUrl,
+  noindex,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -34,60 +34,36 @@ const { title, description, ogUrl, ogType = 'website' } = Astro.props;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-		<!--
-			【テーマ初期化スクリプト】（TASK-0005対応）
-			- フラッシュ防止: ページ読み込み時のちらつきを防止するため、head内でis:inlineで即時実行
-			- localStorage: ユーザーの以前の選択を復元
-			- prefers-color-scheme: システム設定をフォールバックとして使用
-			- デフォルト: ダークモード（tech-stack.md要件）
-			🔵 信頼性レベル: テストケース定義書、要件定義書に基づく実装
-		-->
 		<script is:inline>
-			// 【テーマ初期化処理】: ページ読み込み時に即座に実行
 			(function() {
-				// 【localStorage確認】: 以前のユーザー選択を確認
 				var storedTheme = localStorage.getItem('theme');
-
-				// 【システム設定確認】: ユーザーのOSのダークモード設定を確認
 				var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-				// 【テーマ決定ロジック】:
-				// 優先順位: localStorage > システム設定 > デフォルト（ダークモード）
-				// 1. localStorageに'light'が設定 → ライトモード
-				// 2. localStorageに'dark'が設定 → ダークモード
-				// 3. localStorage未設定でシステムがライト → ライトモード
-				// 4. それ以外 → ダークモード（tech-stack.md要件）
-
-				// 【クラス適用】: html要素にdarkクラスを追加/削除
 				if (storedTheme === 'light') {
-					// ユーザーが明示的にライトモードを選択
 					document.documentElement.classList.remove('dark');
 				} else if (storedTheme === 'dark') {
-					// ユーザーが明示的にダークモードを選択
 					document.documentElement.classList.add('dark');
 				} else if (!prefersDark) {
-					// localStorage未設定 & システムがライトモード → システム設定を尊重
 					document.documentElement.classList.remove('dark');
 				} else {
-					// ダークモード（デフォルト）: システムがダークまたは未設定の場合
 					document.documentElement.classList.add('dark');
 				}
 			})();
 		</script>
-
-		<!-- SEOメタタグ (NFR-101) -->
 		<title>{title}</title>
-		<meta name="description" content={description} />
-
-		<!-- OGPメタタグ (NFR-102) -->
-		<meta property="og:title" content={title} />
-		<meta property="og:description" content={description} />
-		<meta property="og:type" content={ogType} />
-		{ogUrl && <meta property="og:url" content={ogUrl} />}
+		<SEO
+			title={title}
+			description={description}
+			url={ogUrl}
+			image={ogImage}
+			type={ogType}
+			publishedTime={publishedTime}
+			modifiedTime={modifiedTime}
+			tags={tags}
+			canonicalUrl={canonicalUrl}
+			noindex={noindex}
+		/>
 	</head>
 	<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-		<!-- メインコンテンツ (NFR-301: セマンティックHTML) -->
 		<main class="min-h-screen">
 			<slot />
 		</main>
