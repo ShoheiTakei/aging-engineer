@@ -1,0 +1,103 @@
+---
+/**
+ * PostNavigation - 前後記事ナビゲーションコンポーネント
+ *
+ * 関連要件:
+ * - TASK-0014: 記事詳細ページの実装（前後記事ナビ対応）
+ * - NFR-301: セマンティックHTML
+ * - NFR-302: キーボードナビゲーション対応
+ *
+ * 信頼性: 🔵 タスク定義より
+ */
+
+import type { CollectionEntry } from 'astro:content';
+
+type BlogPost = CollectionEntry<'blog'>;
+
+interface Props {
+  prevPost: BlogPost | null;
+  nextPost: BlogPost | null;
+}
+
+const { prevPost, nextPost } = Astro.props;
+const hasNavigation = prevPost || nextPost;
+---
+
+{hasNavigation && (
+  <nav
+    aria-label="記事ナビゲーション"
+    class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"
+  >
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- 前の記事（古い記事） -->
+      <div class="flex flex-col">
+        {prevPost ? (
+          <a
+            href={`/blog/${prevPost.id}`}
+            class="group flex flex-col p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow h-full"
+            rel="prev"
+          >
+            <span class="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              前の記事
+            </span>
+            <span class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+              {prevPost.data.title}
+            </span>
+          </a>
+        ) : (
+          <div class="hidden md:block" aria-hidden="true"></div>
+        )}
+      </div>
+
+      <!-- 次の記事（新しい記事） -->
+      <div class="flex flex-col">
+        {nextPost ? (
+          <a
+            href={`/blog/${nextPost.id}`}
+            class="group flex flex-col p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow h-full text-right"
+            rel="next"
+          >
+            <span class="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1 justify-end">
+              次の記事
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </span>
+            <span class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+              {nextPost.data.title}
+            </span>
+          </a>
+        ) : (
+          <div class="hidden md:block" aria-hidden="true"></div>
+        )}
+      </div>
+    </div>
+  </nav>
+)}

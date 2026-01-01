@@ -1,0 +1,148 @@
+---
+/**
+ * 記事詳細ページ
+ *
+ * 要件:
+ * - TASK-0014: 記事詳細ページの実装（目次・前後記事ナビ対応）
+ * - NFR-301: セマンティックHTML
+ * - NFR-302: キーボードナビゲーション対応
+ *
+ * 信頼性: 🔵 タスク定義より
+ */
+
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import PostNavigation from '../../components/PostNavigation.astro';
+import RelatedArticles from '../../components/RelatedArticles.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate } from '../../utils/date';
+import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
+import { getRelatedPosts } from '../../utils/relatedArticles';
+import { generateTOC } from '../../utils/toc';
+
+type BlogPost = CollectionEntry<'blog'>;
+
+export async function getStaticPaths() {
+  // 全ブログ記事を取得（下書きを除外）
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+  // 公開日で降順ソート
+  const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+  return sortedPosts.map((post, index) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      prevPost: index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null,
+      nextPost: index > 0 ? sortedPosts[index - 1] : null,
+      allPosts: sortedPosts,
+    },
+  }));
+}
+
+interface Props {
+  post: BlogPost;
+  prevPost: BlogPost | null;
+  nextPost: BlogPost | null;
+  allPosts: BlogPost[];
+}
+
+const { post, prevPost, nextPost, allPosts } = Astro.props;
+
+// 記事本文をレンダリング
+const { Content, headings } = await render(post);
+
+// 目次を生成
+const toc = generateTOC(headings);
+
+// 読了時間を計算
+const readingTime = calculateReadingTime(post.body || '');
+const readingTimeText = formatReadingTime(readingTime);
+
+// 関連記事を取得（最大3件）
+const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  ogType="article"
+>
+  <Header siteTitle="aging-engineer" currentPath={`/blog/${post.id}`} />
+
+  <article class="container-narrow py-12">
+    <!-- 記事ヘッダー -->
+    <header class="mb-8">
+      <!-- パンくずリスト -->
+      <nav aria-label="パンくずリスト" class="mb-4">
+        <ol class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <li>
+            <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">ホーム</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a href="/blog/1" class="hover:text-blue-600 dark:hover:text-blue-400">ブログ</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page" class="text-gray-900 dark:text-gray-100 truncate max-w-xs">
+            {post.data.title}
+          </li>
+        </ol>
+      </nav>
+
+      <!-- タイトル -->
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        {post.data.title}
+      </h1>
+
+      <!-- メタ情報 -->
+      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <time datetime={post.data.pubDate.toISOString()}>
+          {formatDate(post.data.pubDate)}
+        </time>
+        {post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.pubDate.getTime() && (
+          <span>
+            （更新: <time datetime={post.data.updatedDate.toISOString()}>
+              {formatDate(post.data.updatedDate)}
+            </time>）
+          </span>
+        )}
+        <span aria-label="読了時間">{readingTimeText}</span>
+      </div>
+
+      <!-- タグ -->
+      {post.data.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2" role="list" aria-label="タグ一覧">
+          {post.data.tags.map((tag) => (
+            <a
+              href={`/tags/${tag}`}
+              class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              role="listitem"
+            >
+              {tag}
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <!-- 目次 -->
+    {toc.hasContent && <TableOfContents toc={toc} />}
+
+    <!-- 記事本文 -->
+    <div class="prose prose-lg dark:prose-invert max-w-none mt-8">
+      <Content />
+    </div>
+
+    <!-- 関連記事 -->
+    <RelatedArticles relatedPosts={relatedPosts} />
+
+    <!-- 前後記事ナビゲーション -->
+    <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+  </article>
+
+  <Footer siteName="aging-engineer" />
+</BaseLayout>
