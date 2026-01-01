@@ -39,7 +39,7 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
   // ページネーション設定（5件/ページ）
-  return paginate(sortedPosts, { pageSize: 5 });
+  return paginate(sortedPosts, { pageSize: PAGE_SIZE });
 }
 
 interface Props {
