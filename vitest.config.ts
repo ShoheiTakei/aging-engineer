@@ -66,8 +66,10 @@ export default getViteConfig({
 
     /**
      * 並列実行の有効化
-     * Vitest 4では pool: threads がデフォルト
+     * - pool: threads（推奨、高速）
+     * - Vitest 4.x: poolOptionsはトップレベルオプションに移行
      */
+    pool: 'threads',
 
     /**
      * テストタイムアウト
