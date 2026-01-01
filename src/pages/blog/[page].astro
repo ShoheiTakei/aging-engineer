@@ -39,13 +39,7 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
   // ページネーション設定（5件/ページ）
-<<<<<<< Updated upstream
   return paginate(sortedPosts, { pageSize: 5 });
-||||||| Stash base
-  return paginate(sortedPosts, { pageSize: PAGE_SIZE });
-=======
-  return paginate(sortedPosts, { pageSize: 5});
->>>>>>> Stashed changes
 }
 
 interface Props {
