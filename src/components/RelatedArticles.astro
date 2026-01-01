@@ -1,0 +1,55 @@
+---
+/**
+ * RelatedArticles.astro - 関連記事コンポーネント
+ *
+ * 関連要件:
+ * - REQ-701: 記事詳細ページに関連記事リストを表示
+ *   - タグが一致する記事を優先表示
+ *   - 最大3件まで表示（コンポーネントレベル）
+ *   - 現在の記事を除外
+ *
+ * 関連文書:
+ * - 関連記事ユーティリティ: src/utils/relatedArticles.ts
+ * - テストファイル: src/components/RelatedArticles.test.ts
+ */
+
+import type { RelatedPostEntry } from '../utils/relatedArticles';
+
+interface Props {
+  relatedPosts: RelatedPostEntry[];
+}
+
+const { relatedPosts } = Astro.props;
+const hasRelatedPosts = relatedPosts.length > 0;
+---
+
+{
+  hasRelatedPosts && (
+    <section class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+        関連記事
+      </h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {relatedPosts.map((entry) => (
+          <a
+            href={`/blog/${entry.post.id}`}
+            class="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+              {entry.post.data.title}
+            </h3>
+            {entry.commonTags.length > 0 && (
+              <div class="flex flex-wrap gap-1 mt-2">
+                {entry.commonTags.map((tag) => (
+                  <span class="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}
