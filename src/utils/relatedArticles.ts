@@ -12,6 +12,8 @@
  * - 要件定義書: docs/implements/blog-article-management/TASK-0009/related-articles-requirements.md
  */
 
+import type { CollectionEntry } from 'astro:content';
+
 // ========================================
 // 定数定義
 // ========================================
@@ -27,30 +29,10 @@ const DEFAULT_MAX_ITEMS = 5;
 // ========================================
 
 /**
- * ブログ記事のフロントマターデータ
- * 🔵 信頼性: Content Collections schemaより
- */
-export type BlogFrontmatter = {
-  title: string;
-  description: string;
-  pubDate: Date;
-  updatedDate?: Date;
-  coverImage?: string;
-  tags: string[];
-  draft: boolean;
-};
-
-/**
  * ブログ記事エントリ（Content Collections型）
- * 🔵 信頼性: Astro Content Collections APIより
+ * 🔵 信頼性: src/content.config.tsのスキーマから導出
  */
-export type BlogPost = {
-  id: string;
-  slug: string;
-  body: string;
-  collection: 'blog';
-  data: BlogFrontmatter;
-};
+export type BlogPost = CollectionEntry<'blog'>;
 
 /**
  * 関連記事スコア付きエントリ
@@ -137,8 +119,8 @@ export function getRelatedPosts(
   const relatedEntries: RelatedPostEntry[] = [];
 
   for (const post of allPosts) {
-    // 現在の記事を除外
-    if (post.slug === currentPost.slug) {
+    // 現在の記事を除外（Astro v5ではidを使用）
+    if (post.id === currentPost.id) {
       continue;
     }
 

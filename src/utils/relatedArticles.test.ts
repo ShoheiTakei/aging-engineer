@@ -15,36 +15,43 @@
 
 import { describe, expect, it } from 'vitest';
 import { getRelatedPosts } from './relatedArticles';
-import type { BlogFrontmatter, BlogPost } from './relatedArticles';
+import type { BlogPost } from './relatedArticles';
 
 // ========================================
 // テストヘルパー関数
 // ========================================
 
 /**
+ * ブログ記事のフロントマターデータ型（テスト用）
+ * BlogPost['data']から導出
+ */
+type BlogFrontmatter = BlogPost['data'];
+
+/**
  * テスト用のBlogPostを生成するヘルパー関数
  * 必須フィールドのみを指定し、残りはデフォルト値を使用
+ *
+ * @note Astro v5ではCollectionEntryは`slug`ではなく`id`を使用
  */
 function createMockPost(params: {
-  slug: string;
+  id: string;
   data?: Partial<BlogFrontmatter>;
   body?: string;
 }): BlogPost {
   return {
-    id: params.slug,
-    slug: params.slug,
+    id: params.id,
     body: params.body ?? 'Test body content',
     collection: 'blog',
     data: {
-      title: params.data?.title ?? `Test Post: ${params.slug}`,
+      title: params.data?.title ?? `Test Post: ${params.id}`,
       description: params.data?.description ?? 'Test description',
       pubDate: params.data?.pubDate ?? new Date('2025-01-15'),
-      updatedDate: params.data?.updatedDate,
-      coverImage: params.data?.coverImage,
+      updatedDate: params.data?.updatedDate ?? new Date('2025-01-15'),
+      coverImage: params.data?.coverImage ?? 'https://placehold.co/1200x630',
       tags: params.data?.tags ?? [],
       draft: params.data?.draft ?? false,
     },
-  };
+  } as BlogPost;
 }
 
 describe('relatedArticles utilities', () => {
@@ -67,22 +74,22 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript', 'React'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript', 'Node.js'] },
           }),
           createMockPost({
-            slug: 'post-2',
+            id: 'post-2',
             data: { tags: ['React', 'Next.js'] },
           }),
           createMockPost({
-            slug: 'post-3',
+            id: 'post-3',
             data: { tags: ['Python'] },
           }),
         ];
@@ -93,7 +100,7 @@ describe('relatedArticles utilities', () => {
         // 【結果検証】: 共通タグを持つ記事のみが返されることを確認
         // 🔵 信頼性: REQ-701より
         expect(result).toHaveLength(2);
-        const slugs = result.map((r) => r.post.slug);
+        const slugs = result.map((r) => r.post.id);
         expect(slugs).toContain('post-1');
         expect(slugs).toContain('post-2');
         expect(slugs).not.toContain('post-3');
@@ -108,22 +115,22 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript', 'React', 'Testing'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'] }, // 共通: 1
           }),
           createMockPost({
-            slug: 'post-2',
+            id: 'post-2',
             data: { tags: ['TypeScript', 'React'] }, // 共通: 2
           }),
           createMockPost({
-            slug: 'post-3',
+            id: 'post-3',
             data: { tags: ['TypeScript', 'React', 'Testing'] }, // 共通: 3
           }),
         ];
@@ -134,11 +141,11 @@ describe('relatedArticles utilities', () => {
         // 【結果検証】: スコア降順でソートされることを確認
         // 🔵 信頼性: REQ-701より
         expect(result).toHaveLength(3);
-        expect(result[0].post.slug).toBe('post-3');
+        expect(result[0].post.id).toBe('post-3');
         expect(result[0].score).toBe(3);
-        expect(result[1].post.slug).toBe('post-2');
+        expect(result[1].post.id).toBe('post-2');
         expect(result[1].score).toBe(2);
-        expect(result[2].post.slug).toBe('post-1');
+        expect(result[2].post.id).toBe('post-1');
         expect(result[2].score).toBe(1);
       });
 
@@ -151,14 +158,14 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'] },
           }),
         ];
@@ -169,8 +176,8 @@ describe('relatedArticles utilities', () => {
         // 【結果検証】: 現在の記事が含まれないことを確認
         // 🔵 信頼性: REQ-701より
         expect(result).toHaveLength(1);
-        expect(result[0].post.slug).toBe('post-1');
-        expect(result.find((r) => r.post.slug === 'current-post')).toBeUndefined();
+        expect(result[0].post.id).toBe('post-1');
+        expect(result.find((r) => r.post.id === 'current-post')).toBeUndefined();
       });
 
       // TC-RA-004: 下書き記事を除外する 🔵
@@ -182,18 +189,18 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'], draft: false },
           }),
           createMockPost({
-            slug: 'post-2',
+            id: 'post-2',
             data: { tags: ['TypeScript'], draft: true },
           }),
         ];
@@ -204,8 +211,8 @@ describe('relatedArticles utilities', () => {
         // 【結果検証】: 下書き記事が含まれないことを確認
         // 🔵 信頼性: REQ-701より
         expect(result).toHaveLength(1);
-        expect(result[0].post.slug).toBe('post-1');
-        expect(result.find((r) => r.post.slug === 'post-2')).toBeUndefined();
+        expect(result[0].post.id).toBe('post-1');
+        expect(result.find((r) => r.post.id === 'post-2')).toBeUndefined();
       });
 
       // TC-RA-005: 最大件数を制限する（デフォルト5件） 🔵
@@ -217,7 +224,7 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と10件の関連記事
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
@@ -225,7 +232,7 @@ describe('relatedArticles utilities', () => {
           currentPost,
           ...Array.from({ length: 10 }, (_, i) =>
             createMockPost({
-              slug: `post-${i + 1}`,
+              id: `post-${i + 1}`,
               data: { tags: ['TypeScript'] },
             }),
           ),
@@ -248,22 +255,22 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'], pubDate: new Date('2025-01-01') },
           }),
           createMockPost({
-            slug: 'post-2',
+            id: 'post-2',
             data: { tags: ['TypeScript'], pubDate: new Date('2025-01-15') },
           }),
           createMockPost({
-            slug: 'post-3',
+            id: 'post-3',
             data: { tags: ['TypeScript'], pubDate: new Date('2025-01-10') },
           }),
         ];
@@ -274,9 +281,9 @@ describe('relatedArticles utilities', () => {
         // 【結果検証】: 公開日降順でソートされることを確認
         // 🟡 信頼性: 要件定義書より推測
         expect(result).toHaveLength(3);
-        expect(result[0].post.slug).toBe('post-2'); // 2025-01-15
-        expect(result[1].post.slug).toBe('post-3'); // 2025-01-10
-        expect(result[2].post.slug).toBe('post-1'); // 2025-01-01
+        expect(result[0].post.id).toBe('post-2'); // 2025-01-15
+        expect(result[1].post.id).toBe('post-3'); // 2025-01-10
+        expect(result[2].post.id).toBe('post-1'); // 2025-01-01
       });
     });
 
@@ -294,14 +301,14 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: タグなしの現在の記事
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: [] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'] },
           }),
         ];
@@ -323,18 +330,18 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['Python'] },
           }),
           createMockPost({
-            slug: 'post-2',
+            id: 'post-2',
             data: { tags: ['Go'] },
           }),
         ];
@@ -356,7 +363,7 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事のみ
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
@@ -379,14 +386,14 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'] },
           }),
         ];
@@ -408,7 +415,7 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と10件の関連記事
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
@@ -416,7 +423,7 @@ describe('relatedArticles utilities', () => {
           currentPost,
           ...Array.from({ length: 10 }, (_, i) =>
             createMockPost({
-              slug: `post-${i + 1}`,
+              id: `post-${i + 1}`,
               data: { tags: ['TypeScript'] },
             }),
           ),
@@ -445,7 +452,7 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と空の全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
@@ -468,14 +475,14 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript'] },
           }),
         ];
@@ -497,14 +504,14 @@ describe('relatedArticles utilities', () => {
 
         // 【テストデータ準備】: 現在の記事と全記事リスト
         const currentPost = createMockPost({
-          slug: 'current-post',
+          id: 'current-post',
           data: { tags: ['TypeScript', 'React'] },
         });
 
         const allPosts: BlogPost[] = [
           currentPost,
           createMockPost({
-            slug: 'post-1',
+            id: 'post-1',
             data: { tags: ['TypeScript', 'Node.js'] },
           }),
         ];
@@ -515,7 +522,7 @@ describe('relatedArticles utilities', () => {
         // 【結果検証】: 共通タグ情報が正しく返されることを確認
         // 🔵 信頼性: 要件定義書より
         expect(result).toHaveLength(1);
-        expect(result[0].post.slug).toBe('post-1');
+        expect(result[0].post.id).toBe('post-1');
         expect(result[0].score).toBe(1);
         expect(result[0].commonTags).toEqual(['TypeScript']);
       });
