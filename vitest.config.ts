@@ -8,9 +8,9 @@
  * 信頼性: 🔵 Vitest公式ドキュメント、Astroテストベストプラクティスに基づく
  */
 
-import { defineConfig } from 'vitest/config';
+import { getViteConfig } from 'astro/config';
 
-export default defineConfig({
+export default getViteConfig({
   test: {
     // ========================================
     // テスト環境設定
@@ -64,15 +64,9 @@ export default defineConfig({
 
     /**
      * 並列実行の有効化
-     * - pool: threads（推奨、高速）
-     * - poolOptions: 並列実行のオプション
+     * Vitest 4では `pool` と `poolOptions` が廃止され、トップレベルの設定になった
+     * 参照: https://vitest.dev/guide/migration#pool-rework
      */
-    pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: false, // 並列実行を有効化
-      },
-    },
 
     /**
      * テストタイムアウト
@@ -178,29 +172,5 @@ export default defineConfig({
       'coverage/**',
       'test-results/**',
     ],
-  },
-
-  // ========================================
-  // Vite設定（パス解決等）
-  // ========================================
-
-  resolve: {
-    alias: {
-      '@': '/src',
-      '@/components': '/src/components',
-      '@/layouts': '/src/layouts',
-      '@/utils': '/src/utils',
-      '@/content': '/src/content',
-    },
-  },
-
-  // ========================================
-  // 環境変数設定（テスト用）
-  // ========================================
-
-  define: {
-    'import.meta.env.PUBLIC_R2_URL': JSON.stringify(
-      process.env.PUBLIC_R2_URL || 'https://test-r2-url.com',
-    ),
   },
 });
