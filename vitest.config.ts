@@ -11,7 +11,8 @@
  * 直接 defineConfig を使用しています。
  */
 
-import { defineConfig } from 'vitest/config';
+import { getViteConfig } from 'astro/config';
+import { defineConfig, mergeConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
@@ -68,14 +69,9 @@ export default defineConfig({
     /**
      * 並列実行の有効化
      * - pool: threads（推奨、高速）
-     * - poolOptions: 並列実行のオプション
+     * - Vitest 4.x: poolOptionsはトップレベルオプションに移行
      */
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: false, // 並列実行を有効化
-      },
-    },
 
     /**
      * テストタイムアウト
