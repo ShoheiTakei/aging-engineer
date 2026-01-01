@@ -144,15 +144,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     matches: MatchInfo[];
   }
 
-  // DOM要素の取得
-  const searchInput = document.getElementById(
-    'search-input'
-  ) as HTMLInputElement;
-  const initialMessage = document.getElementById('initial-message')!;
-  const loadingMessage = document.getElementById('loading-message')!;
-  const noResultsMessage = document.getElementById('no-results-message')!;
-  const resultsList = document.getElementById('results-list')!;
-  const resultsCount = document.getElementById('results-count')!;
+  // DOM要素の取得と検証
+  const searchInputEl = document.getElementById('search-input');
+  const initialMessageEl = document.getElementById('initial-message');
+  const loadingMessageEl = document.getElementById('loading-message');
+  const noResultsMessageEl = document.getElementById('no-results-message');
+  const resultsListEl = document.getElementById('results-list');
+  const resultsCountEl = document.getElementById('results-count');
+
+  // 必要なDOM要素が存在しない場合は初期化を中止
+  if (
+    !searchInputEl ||
+    !initialMessageEl ||
+    !loadingMessageEl ||
+    !noResultsMessageEl ||
+    !resultsListEl ||
+    !resultsCountEl
+  ) {
+    console.error('検索ページの初期化に失敗しました：必要なDOM要素が見つかりません');
+    throw new Error('検索ページの初期化に失敗しました');
+  }
+
+  // 型を確定させた変数に再代入
+  const searchInput = searchInputEl as HTMLInputElement;
+  const initialMessage = initialMessageEl;
+  const loadingMessage = loadingMessageEl;
+  const noResultsMessage = noResultsMessageEl;
+  const resultsList = resultsListEl;
+  const resultsCount = resultsCountEl;
 
   // 検索インデックスのキャッシュ
   let searchIndex: SearchIndexItem[] | null = null;
@@ -196,7 +215,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         break;
       }
       matches.push([index, index + query.length]);
-      startIndex = index + 1;
+      startIndex = index + query.length;
     }
 
     return matches;

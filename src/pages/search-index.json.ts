@@ -29,7 +29,6 @@ export const GET: APIRoute = async () => {
         description: post.data.description,
         pubDate: post.data.pubDate,
         tags: post.data.tags,
-        draft: post.data.draft,
       },
       body,
     };
