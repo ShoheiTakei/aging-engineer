@@ -1,0 +1,182 @@
+---
+/**
+ * ブログページネーションページ
+ *
+ * TASK-0012: ページネーション機能の実装
+ *
+ * 【機能概要】:
+ * - 5件/ページで記事を分割表示
+ * - 前後ページへのナビゲーション
+ * - 現在のページ番号表示
+ *
+ * 【関連要件】:
+ * - REQ-101: 記事一覧表示
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-303: ARIAラベル設定
+ *
+ * 信頼性: 要件定義書、アーキテクチャ設計書に基づく
+ */
+
+import { getCollection } from 'astro:content';
+import type { GetStaticPaths, Page } from 'astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+/**
+ * 日付フォーマット関数
+ * 日本語形式の日付文字列を返す
+ */
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+/**
+ * getStaticPaths - ページネーション用のパスを生成
+ *
+ * Astroのビルトインpaginate機能を使用して、
+ * 記事を5件ずつ分割したページを生成する
+ */
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+  // 1ページあたりの記事数
+  const POSTS_PER_PAGE = 5;
+
+  // 公開記事を取得（draft: falseのみ）
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+  // 公開日の降順でソート（新しい記事が先）
+  const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+  // paginateでページネーションパスを生成
+  return paginate(sortedPosts, { pageSize: POSTS_PER_PAGE });
+};
+
+// Page型でpageプロパティを取得
+interface Props {
+  page: Page<Awaited<ReturnType<typeof getCollection<'blog'>>>[number]>;
+}
+
+const { page } = Astro.props;
+
+// 現在のページ番号
+const currentPage = page.currentPage;
+// 総ページ数
+const totalPages = page.lastPage;
+// このページの記事
+const posts = page.data;
+---
+
+<BaseLayout
+  title={`ブログ - ページ ${currentPage} | Aging Engineer Blog`}
+  description={`エンジニアの成長と日々の学びを綴るブログの記事一覧（ページ ${currentPage}/${totalPages}）`}
+  ogType="website"
+>
+  <Header siteTitle="Aging Engineer Blog" currentPath="/blog" />
+
+  <div class="container-wide py-8">
+    <!-- ページタイトル -->
+    <section aria-labelledby="blog-heading">
+      <h1 id="blog-heading" class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        ブログ記事一覧
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400 mb-8">
+        ページ {currentPage} / {totalPages}
+      </p>
+    </section>
+
+    <!-- 記事一覧 -->
+    <section aria-labelledby="articles-heading">
+      <h2 id="articles-heading" class="sr-only">記事一覧</h2>
+      <ul role="list" aria-label="記事一覧" class="space-y-6">
+        {
+          posts.map((post) => (
+            <li>
+              <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <a
+                  href={`/blog/${post.id}`}
+                  class="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg"
+                >
+                  <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    {post.data.title}
+                  </h3>
+                  <p class="text-gray-600 dark:text-gray-400 mb-3">
+                    {post.data.description}
+                  </p>
+                  <div class="flex flex-wrap items-center gap-4 text-sm">
+                    <time
+                      datetime={post.data.pubDate.toISOString()}
+                      class="text-gray-500 dark:text-gray-500"
+                    >
+                      {formatDate(post.data.pubDate)}
+                    </time>
+                    {post.data.tags.length > 0 && (
+                      <div class="flex flex-wrap gap-2">
+                        {post.data.tags.map((tag) => (
+                          <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- ページネーションナビゲーション -->
+    <nav aria-label="ページネーション" class="mt-12">
+      <div class="flex justify-center items-center gap-4">
+        {/* 前のページ */}
+        {page.url.prev ? (
+          <a
+            href={page.url.prev}
+            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            前のページ
+          </a>
+        ) : (
+          <span class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed">
+            前のページ
+          </span>
+        )}
+
+        {/* 現在のページ番号 */}
+        <span
+          aria-current="page"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold"
+        >
+          {currentPage}
+        </span>
+
+        {/* 次のページ */}
+        {page.url.next ? (
+          <a
+            href={page.url.next}
+            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            次のページ
+          </a>
+        ) : (
+          <span class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed">
+            次のページ
+          </span>
+        )}
+      </div>
+
+      {/* ページ番号インジケーター */}
+      <p class="text-center text-gray-600 dark:text-gray-400 mt-4 text-sm">
+        全 {totalPages} ページ中 {currentPage} ページ目
+      </p>
+    </nav>
+  </div>
+
+  <Footer siteName="Aging Engineer Blog" />
+</BaseLayout>
