@@ -35,7 +35,8 @@ TASK-0006「日付フォーマットユーティリティの実装」の開発�
 
 ### アーキテクチャパターン
 
-**Islands Architecture + Static Site Generation (SSG)**
+#### Islands Architecture + Static Site Generation (SSG)
+
 - ビルド時に全ページを静的HTML生成
 - 日付フォーマットはサーバーサイド（ビルド時）で処理
 - ユーティリティ関数は純粋関数として実装（副作用なし）
@@ -87,7 +88,8 @@ TASK-0006「日付フォーマットユーティリティの実装」の開発�
 ### Git規約
 
 **コミットメッセージ**: Conventional Commits準拠
-```
+
+```text
 feat: 日付フォーマットユーティリティを実装
 test: formatDate()のテストケースを追加
 fix: 無効な日付のエラーハンドリングを修正
@@ -115,7 +117,8 @@ fix: 無効な日付のエラーハンドリングを修正
    - 境界値: 日付境界（23:59 → 0:00）
 
 **テストファイル配置**:
-```
+
+```text
 src/
 └── utils/
     ├── date.ts           # 実装ファイル
@@ -224,7 +227,8 @@ const blogCollection = defineCollection({
 **場所**: `docs/design/blog-article-management/architecture.md`
 
 **utilsディレクトリ構造**:
-```
+
+```text
 src/
 └── utils/
     ├── r2.ts              # R2 URL生成ヘルパー

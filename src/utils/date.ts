@@ -79,7 +79,10 @@ function toTokyoDateOnly(date: Date): Date {
 
   // 【時刻リセット】: 日付のみを保持（時・分・秒を0に） 🔵
   // 【目的】: 日単位での比較を可能にする
-  return new Date(dateInTokyo.getFullYear(), dateInTokyo.getMonth(), dateInTokyo.getDate());
+  // 【タイムゾーン非依存】: Date.UTC()を使用して実行環境のローカルタイムゾーンに依存しない
+  return new Date(
+    Date.UTC(dateInTokyo.getFullYear(), dateInTokyo.getMonth(), dateInTokyo.getDate()),
+  );
 }
 
 /**
