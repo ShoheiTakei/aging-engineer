@@ -1,0 +1,195 @@
+---
+/**
+ * BlogCard - ブログカードコンポーネント
+ *
+ * 【機能概要】: ブログ記事のプレビューをカード形式で表示
+ * 【表示要素】: カバー画像、タイトル、説明、タグ、公開日
+ * 【実装方針】: セマンティックHTMLとWCAG 2.1 AA準拠のアクセシビリティを実現
+ * 【設計方針】: ゼロJavaScript、SSG専用、既存の.cardスタイルを活用
+ * 【パフォーマンス】: 遅延読み込み（loading="lazy"）、適切なアスペクト比
+ * 【保守性】: Props型定義による型安全性、Tailwind CSSによる一貫したスタイリング
+ *
+ * 関連要件:
+ * - TASK-0013: ブログカードコンポーネントの実装
+ * - NFR-301: セマンティックHTML（<article>, <time>）使用
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル設定
+ * - NFR-304: フォーカス可視化（focus-visible:ring-2）
+ * - NFR-202: 画像のレスポンシブ対応
+ */
+
+interface Props {
+  /**
+   * 記事のURL（必須）
+   * 【用途】: カード全体をクリック可能なリンクとして設定
+   * 【形式】: 相対パス（例: /blog/sample-post）
+   */
+  href: string;
+
+  /**
+   * 記事タイトル（必須）
+   * 【用途】: カード内に見出しとして表示
+   * 【制約】: 必須項目、空文字列は不可
+   * 【表示制御】: 長いタイトルは2行で切り詰め（line-clamp-2）
+   */
+  title: string;
+
+  /**
+   * 記事の説明文（必須）
+   * 【用途】: 記事の概要をカード内に表示
+   * 【表示制御】: 3行で切り詰め（line-clamp-3）
+   */
+  description: string;
+
+  /**
+   * カバー画像のURL（任意）
+   * 【用途】: カード上部に表示するカバー画像
+   * 【デフォルト値】: プレースホルダー画像
+   * 【最適化】: loading="lazy"による遅延読み込み
+   */
+  coverImage?: string;
+
+  /**
+   * タグの配列（任意）
+   * 【用途】: 記事に関連するタグをバッジ形式で表示
+   * 【デフォルト値】: 空配列
+   * 【動作】: 各タグは/tags/{tag}へのリンクとして機能
+   */
+  tags?: string[];
+
+  /**
+   * 公開日（任意）
+   * 【用途】: 記事の公開日を表示
+   * 【形式】: Date型、formatDateで日本語フォーマットに変換
+   */
+  pubDate?: Date;
+}
+
+import { formatDate } from '../utils/date';
+
+const {
+  href,
+  title,
+  description,
+  coverImage = 'https://placehold.co/1200x630',
+  tags = [],
+  pubDate,
+} = Astro.props;
+---
+
+<!--
+  【ブログカードコンテナ】
+  セマンティックHTMLとして<article>タグを使用（NFR-301）
+
+  【スタイリング方針】:
+  - 既存の.cardクラスを活用（bg-white, border, shadow, hover:shadow-md）
+  - overflow-hidden: カバー画像の角丸を適用
+  - flex flex-col: 垂直方向のレイアウト
+  - h-full: グリッド内で高さを揃える
+
+  【アクセシビリティ】:
+  - <article>タグによりスクリーンリーダーが記事として認識
+  - グループ化によりホバー効果の伝播
+-->
+<article class="card overflow-hidden flex flex-col h-full group">
+  <!--
+    【カバー画像リンク】
+    記事へのナビゲーションとして機能
+
+    【アクセシビリティ】:
+    - tabindex="-1": 重複フォーカスを防止（タイトルリンクが主要フォーカス）
+    - aria-hidden="true": スクリーンリーダーから隠す（装飾的要素）
+  -->
+  <a href={href} tabindex="-1" aria-hidden="true" class="block">
+    <div class="aspect-video overflow-hidden bg-gray-100 dark:bg-gray-700">
+      <!--
+        【カバー画像】
+        【最適化】:
+        - loading="lazy": 遅延読み込みでパフォーマンス向上
+        - aspect-video: 16:9のアスペクト比を維持
+        - object-cover: 画像の切り抜きで比率を維持
+        - ホバー効果: group-hover:scale-105で拡大アニメーション
+      -->
+      <img
+        src={coverImage}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+    </div>
+  </a>
+
+  <!--
+    【カードコンテンツ】
+    タイトル、説明、タグ、日付を含むコンテンツ領域
+  -->
+  <div class="flex flex-col flex-grow p-4">
+    <!--
+      【記事タイトル】
+      h3タグでセマンティックな見出しを設定
+
+      【スタイリング】:
+      - text-lg: 適切なフォントサイズ
+      - font-bold: 太字で強調
+      - line-clamp-2: 2行で切り詰め
+
+      【アクセシビリティ】:
+      - 主要なフォーカス可能要素として設定
+      - focus-visible:ring-2でキーボードフォーカス可視化
+    -->
+    <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-2 mb-2">
+      <a
+        href={href}
+        class="hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors duration-200"
+      >
+        {title}
+      </a>
+    </h3>
+
+    <!--
+      【記事説明】
+      記事の概要を3行で切り詰めて表示
+    -->
+    <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-3 flex-grow">
+      {description}
+    </p>
+
+    <!--
+      【タグ一覧】
+      タグが存在する場合のみ表示
+    -->
+    {
+      tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-3">
+          {tags.map((tag) => (
+            <a
+              href={`/tags/${encodeURIComponent(tag)}`}
+              class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-700 dark:hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 transition-colors duration-200"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )
+    }
+
+    <!--
+      【公開日】
+      公開日が存在する場合のみ表示
+
+      【アクセシビリティ】:
+      - <time>タグとdatetime属性でマシンリーダブルな日付を提供
+    -->
+    {
+      pubDate && (
+        <time
+          datetime={pubDate.toISOString()}
+          class="text-xs text-gray-500 dark:text-gray-400 mt-auto"
+        >
+          {formatDate(pubDate)}
+        </time>
+      )
+    }
+  </div>
+</article>
