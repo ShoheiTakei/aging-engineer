@@ -5,12 +5,15 @@
  * - アーキテクチャ設計: docs/design/frontend-test-infra/architecture.md
  * - テストパターン: docs/design/frontend-test-infra/test-patterns.md
  *
- * 信頼性: 🔵 Vitest公式ドキュメント、Astroテストベストプラクティスに基づく
+ * 信頼性: 🔵 Vitest公式ドキュメントに基づく
+ *
+ * 注意: getViteConfig (astro/config) はVitest 2.x + Astro 5.x で互換性問題があるため、
+ * 直接 defineConfig を使用しています。
  */
 
-import { getViteConfig } from 'astro/config';
+import { defineConfig } from 'vitest/config';
 
-export default getViteConfig({
+export default defineConfig({
   test: {
     // ========================================
     // テスト環境設定
@@ -64,9 +67,15 @@ export default getViteConfig({
 
     /**
      * 並列実行の有効化
-     * Vitest 4では `pool` と `poolOptions` が廃止され、トップレベルの設定になった
-     * 参照: https://vitest.dev/guide/migration#pool-rework
+     * - pool: threads（推奨、高速）
+     * - poolOptions: 並列実行のオプション
      */
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false, // 並列実行を有効化
+      },
+    },
 
     /**
      * テストタイムアウト
@@ -129,22 +138,6 @@ export default getViteConfig({
     },
 
     // ========================================
-    // モック設定
-    // ========================================
-
-    /**
-     * setupファイル
-     * テスト実行前に読み込むセットアップファイル
-     */
-    // setupFiles: ['./tests/setup.ts'],
-
-    /**
-     * グローバルセットアップ
-     * すべてのテストスイート実行前に1度だけ実行
-     */
-    // globalSetup: './tests/globalSetup.ts',
-
-    // ========================================
     // レポート設定
     // ========================================
 
@@ -165,12 +158,30 @@ export default getViteConfig({
     /**
      * ウォッチモードのファイル監視除外
      */
-    watchExclude: [
-      'node_modules/**',
-      'dist/**',
-      '.astro/**',
-      'coverage/**',
-      'test-results/**',
-    ],
+    watchExclude: ['node_modules/**', 'dist/**', '.astro/**', 'coverage/**', 'test-results/**'],
+  },
+
+  // ========================================
+  // Vite設定（パス解決等）
+  // ========================================
+
+  resolve: {
+    alias: {
+      '@': '/src',
+      '@/components': '/src/components',
+      '@/layouts': '/src/layouts',
+      '@/utils': '/src/utils',
+      '@/content': '/src/content',
+    },
+  },
+
+  // ========================================
+  // 環境変数設定（テスト用）
+  // ========================================
+
+  define: {
+    'import.meta.env.PUBLIC_R2_URL': JSON.stringify(
+      process.env.PUBLIC_R2_URL || 'https://test-r2-url.com',
+    ),
   },
 });
