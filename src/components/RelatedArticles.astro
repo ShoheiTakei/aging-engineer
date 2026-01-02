@@ -1,55 +1,178 @@
 ---
 /**
- * RelatedArticles.astro - 関連記事コンポーネント
+ * RelatedArticles - 関連記事表示コンポーネント
+ *
+ * 【機能概要】: 記事詳細ページで関連記事リストを表示する
+ * 【実装方針】: セマンティックHTMLとWCAG 2.1 AA準拠のアクセシビリティを実現
+ * 【設計方針】: ゼロJavaScript、SSG専用、最高のパフォーマンス
+ * 【パフォーマンス】: ビルド時静的生成により実行時オーバーヘッドゼロ
+ * 🔵 信頼性レベル: REQ-701要件定義書に基づく実装
  *
  * 関連要件:
  * - REQ-701: 記事詳細ページに関連記事リストを表示
  *   - タグが一致する記事を優先表示
- *   - 最大3件まで表示（コンポーネントレベル）
+ *   - 最大5件まで表示
  *   - 現在の記事を除外
- *
- * 関連文書:
- * - 関連記事ユーティリティ: src/utils/relatedArticles.ts
- * - テストファイル: src/components/RelatedArticles.test.ts
+ * - NFR-301: セマンティックHTML（<section>, <h2>）使用
+ * - NFR-303: ARIAラベル（aria-labelledby）設定
+ * - NFR-304: フォーカス可視化（focus-visible:ring-2）
  */
 
 import type { RelatedPostEntry } from '../utils/relatedArticles';
+import { formatDate } from '../utils/date';
 
 interface Props {
+  /**
+   * 関連記事のリスト
+   * 【用途】: getRelatedPosts()から取得した関連記事エントリ
+   * 【内容】: post（記事データ）、score（共通タグ数）、commonTags（共通タグリスト）
+   * 🔵 信頼性レベル: REQ-701要件定義書より
+   */
   relatedPosts: RelatedPostEntry[];
 }
 
 const { relatedPosts } = Astro.props;
+
+/**
+ * 【早期リターン判定】
+ * 関連記事が0件の場合はセクション自体を表示しない
+ * 🔵 信頼性レベル: TC-RAC-101テストケースより
+ */
 const hasRelatedPosts = relatedPosts.length > 0;
 ---
 
-{
-  hasRelatedPosts && (
-    <section class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-      <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-        関連記事
-      </h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {relatedPosts.map((entry) => (
+{hasRelatedPosts && (
+  <!--
+    【関連記事セクション】
+    セマンティックHTMLとして<section>タグを使用（NFR-301）
+
+    【アクセシビリティ】:
+    - aria-labelledby: 見出しとセクションを関連付け、スクリーンリーダーが認識（NFR-303）
+
+    【スタイリング】:
+    - mt-12: 記事本文との間隔
+    - pt-8: 上部境界線との間隔
+    - border-t: 視覚的な区切り線
+    - ダークモード対応: border-gray-200/dark:border-gray-700
+
+    🔵 信頼性レベル: NFR-301、NFR-303要件に基づく実装
+  -->
+  <section
+    aria-labelledby="related-articles-heading"
+    class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"
+  >
+    <!--
+      【セクション見出し】
+      h2タグで関連記事セクションを明示（NFR-301）
+
+      【スタイリング】:
+      - text-2xl: 適切なフォントサイズ
+      - font-bold: 太字
+      - mb-6: 見出しとリストの間隔
+      - ダークモード対応: text-gray-900/dark:text-gray-100
+
+      🔵 信頼性レベル: NFR-301要件に基づく実装
+    -->
+    <h2
+      id="related-articles-heading"
+      class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+    >
+      関連記事
+    </h2>
+
+    <!--
+      【関連記事リスト】
+      セマンティックHTMLとして<ul><li>構造を使用（NFR-301）
+
+      【レスポンシブデザイン】:
+      - grid: グリッドレイアウト
+      - gap-4: カード間の間隔
+      - grid-cols-1: モバイルは1列
+      - md:grid-cols-2: タブレット以上は2列
+      - lg:grid-cols-3: デスクトップは3列
+
+      🔵 信頼性レベル: レスポンシブデザインのベストプラクティスに基づく実装
+    -->
+    <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {relatedPosts.map((entry) => (
+        <li>
+          <!--
+            【関連記事カード】
+            各記事をカードスタイルで表示
+
+            【スタイリング】:
+            - block: ブロック要素化
+            - group: hover効果のグループ化
+            - p-4: 内部余白
+            - rounded-lg: 角丸
+            - border: 境界線
+            - transition: ホバー時のアニメーション
+            - ダークモード対応
+
+            【フォーカス可視化】（NFR-304）:
+            - focus:outline-none: デフォルトアウトライン無効化
+            - focus-visible:ring-2: キーボードフォーカス時のリング表示
+            - focus-visible:ring-blue-500: 青色リング
+            - focus-visible:ring-offset-2: リングオフセット
+
+            🔵 信頼性レベル: NFR-304要件、テストケースに基づく実装
+          -->
           <a
             href={`/blog/${entry.post.id}`}
-            class="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+            class="block group p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            <h3 class="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+            <!--
+              【記事タイトル】
+              h3タグで記事タイトルを表示
+
+              【スタイリング】:
+              - font-semibold: セミボールド
+              - text-gray-900/dark:text-gray-100: テキスト色
+              - group-hover: 親要素ホバー時の色変化
+              - line-clamp-2: 2行で省略
+
+              🔵 信頼性レベル: 一般的なカードデザインパターン
+            -->
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 line-clamp-2 mb-2">
               {entry.post.data.title}
             </h3>
-            {entry.commonTags.length > 0 && (
-              <div class="flex flex-wrap gap-1 mt-2">
-                {entry.commonTags.map((tag) => (
-                  <span class="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+
+            <!--
+              【公開日表示】
+              記事の公開日を表示
+
+              【スタイリング】:
+              - text-sm: 小さめのフォント
+              - text-gray-500/dark:text-gray-400: 補助テキスト色
+              - mb-2: 下部余白
+
+              🔵 信頼性レベル: TC-RAC-004テストケースより
+            -->
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              {formatDate(entry.post.data.pubDate)}
+            </p>
+
+            <!--
+              【共通タグ表示】
+              この記事との共通タグをバッジで表示
+
+              【スタイリング】:
+              - flex flex-wrap: 折り返し可能なフレックス
+              - gap-1: タグ間の間隔
+              - 各タグ: 小さなバッジスタイル
+
+              🔵 信頼性レベル: TC-RAC-003テストケースより
+            -->
+            <div class="flex flex-wrap gap-1">
+              {entry.commonTags.map((tag) => (
+                <span class="inline-block text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                  {tag}
+                </span>
+              ))}
+            </div>
           </a>
-        ))}
-      </div>
-    </section>
-  )
-}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
