@@ -115,17 +115,18 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
 
       <!-- タグ -->
       {post.data.tags.length > 0 && (
-        <div class="flex flex-wrap gap-2" role="list" aria-label="タグ一覧">
+        <ul class="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="タグ一覧">
           {post.data.tags.map((tag) => (
-            <a
-              href={`/tags/${tag}`}
-              class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              role="listitem"
-            >
-              {tag}
-            </a>
+            <li>
+              <a
+                href={`/tags/${tag}`}
+                class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors inline-block"
+              >
+                {tag}
+              </a>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </header>
 
