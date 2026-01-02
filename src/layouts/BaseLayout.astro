@@ -16,6 +16,7 @@
 
 import '../styles/global.css';
 import SEO from '../components/SEO.astro';
+import { siteConfig } from '../config/site';
 
 interface Props {
   /** ページタイトル（必須） */
@@ -122,7 +123,7 @@ const faviconBase = '/assets/favicons';
 		<link
 			rel="alternate"
 			type="application/rss+xml"
-			title="aging-engineer RSS Feed"
+			title={`${siteConfig.rss.title} RSS Feed`}
 			href="/rss.xml"
 		/>
 

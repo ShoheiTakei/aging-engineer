@@ -7,6 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { siteConfig } from '../config/site';
 
 // テスト用のモックデータ
 const mockPosts = [
@@ -95,7 +96,7 @@ describe('RSS Feed', () => {
 
   describe('フィードメタデータ', () => {
     it('正しいサイトURLを持つ', () => {
-      const siteUrl = 'https://aging-engineer.com';
+      const siteUrl = siteConfig.url;
       expect(siteUrl).toMatch(/^https:\/\//);
     });
 

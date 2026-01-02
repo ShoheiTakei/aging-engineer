@@ -16,6 +16,7 @@ import BlogCard from '../components/BlogCard.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config/site';
 
 // 全ブログ記事を取得（下書きを除外、公開日降順）
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
@@ -28,11 +29,11 @@ const latestPosts = sortedPosts.slice(0, 5);
 ---
 
 <BaseLayout
-  title="Aging Engineer Blog"
-  description="エンジニアリングに関するブログ。プログラミング、技術トピック、開発ノウハウを発信します。"
+  title={siteConfig.fullName}
+  description={siteConfig.description}
   type="website"
 >
-  <Header siteTitle="エイジング・エンジニア" currentPath="/" />
+  <Header siteTitle={siteConfig.name} currentPath="/" />
 
   <div class="container-narrow py-12">
     <!-- ページヘッダー -->
@@ -80,5 +81,5 @@ const latestPosts = sortedPosts.slice(0, 5);
     )}
   </div>
 
-  <Footer siteName="エイジング・エンジニア" />
+  <Footer siteName={siteConfig.name} />
 </BaseLayout>

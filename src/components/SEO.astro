@@ -13,6 +13,8 @@
  * 信頼性: 🔵 requirements.md・architecture.mdより
  */
 
+import { siteConfig } from '../config/site';
+
 interface Props {
   /** ページタイトル（必須） */
   title: string;
@@ -53,8 +55,8 @@ const {
   publishedTime,
   modifiedTime,
   tags = [],
-  author = 'Aging Engineer',
-  siteName = 'Aging Engineer Blog',
+  author = siteConfig.author.name,
+  siteName = siteConfig.fullName,
   twitterCard = 'summary_large_image',
   twitterSite,
   canonicalUrl,
@@ -62,7 +64,7 @@ const {
 } = Astro.props;
 
 // サイトURLの取得（末尾スラッシュを除去）
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://aging-engineer.pages.dev';
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') || siteConfig.url;
 const pageUrl = url || Astro.url.href;
 const canonical = canonicalUrl || pageUrl;
 
@@ -72,7 +74,7 @@ const websiteSchema = {
   '@type': 'WebSite',
   name: siteName,
   url: siteUrl,
-  description: 'Aging Engineer Blog - エンジニアリングブログ',
+  description: siteConfig.fullDescription,
   inLanguage: 'ja',
   publisher: {
     '@type': 'Organization',
