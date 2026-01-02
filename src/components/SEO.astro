@@ -64,7 +64,7 @@ const {
 } = Astro.props;
 
 // サイトURLの取得（末尾スラッシュを除去）
-const siteUrl = Astro.site?.toString().replace(/\/$/, '') || siteConfig.devUrl;
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') || siteConfig.url;
 const pageUrl = url || Astro.url.href;
 const canonical = canonicalUrl || pageUrl;
 

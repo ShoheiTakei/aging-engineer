@@ -18,10 +18,8 @@ export interface SiteConfig {
   name: string;
   /** サイトフルネーム（SEO用） */
   fullName: string;
-  /** サイトのベースURL（本番） */
+  /** サイトのベースURL */
   url: string;
-  /** サイトのベースURL（開発） */
-  devUrl: string;
   /** サイトの説明 */
   description: string;
   /** サイトのフル説明（SEO用） */
@@ -54,7 +52,6 @@ export const siteConfig: SiteConfig = {
   name: 'Aging Engineer',
   fullName: 'Aging Engineer',
   url: 'https://aging-engineer.com',
-  devUrl: 'https://aging-engineer.pages.dev',
   description: '40代からのエンジニアリング。経験と知識を活かした技術情報を発信します。',
   fullDescription: 'Aging Engineer - エンジニアリングブログ',
   author: {
