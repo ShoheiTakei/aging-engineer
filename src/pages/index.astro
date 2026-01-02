@@ -63,14 +63,16 @@ const latestPosts = sortedPosts.slice(0, 5);
       )}
     </section>
 
-    <!-- 全記事一覧へのリンク -->
-    <div class="text-center">
-      <a
-        href="/blog/1"
-        class="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors duration-200"
-      >
-        すべての記事を見る
-      </a>
-    </div>
+    <!-- 全記事一覧へのリンク（記事がある場合のみ表示） -->
+    {latestPosts.length > 0 && (
+      <div class="text-center">
+        <a
+          href="/blog/1"
+          class="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors duration-200"
+        >
+          すべての記事を見る
+        </a>
+      </div>
+    )}
   </div>
 </BaseLayout>
