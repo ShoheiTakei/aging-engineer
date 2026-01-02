@@ -40,11 +40,15 @@
   /* セマンティックHTML - 基本スタイル */
   html {
     @apply scroll-smooth;
+    margin: 0;
+    padding: 0;
   }
 
   body {
     @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
     @apply font-sans antialiased;
+    margin: 0;
+    padding: 0;
   }
 
   /* 見出しスタイル */
