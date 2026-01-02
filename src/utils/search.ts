@@ -226,13 +226,17 @@ function truncateBody(body: string, maxLength: number): string {
 }
 
 /**
- * テキスト内でクエリにマッチする位置を検索
+ * テキスト内でクエリにマッチする位置を検索（重複なし）
  *
  * @param text - 検索対象テキスト
- * @param query - 検索クエリ（小文字）
- * @returns マッチ位置の配列
+ * @param query - 検索クエリ（小文字化済みを想定）
+ * @returns マッチ位置の配列 [開始位置, 終了位置][]
+ *
+ * @example
+ * findMatches('hello world', 'o') // [[4, 5], [7, 8]]
+ * findMatches('aaa', 'aa')        // [[0, 2]] ← 重複なし
  */
-function findMatches(text: string, query: string): [number, number][] {
+export function findMatches(text: string, query: string): [number, number][] {
   const normalizedText = text.toLowerCase();
   const matches: [number, number][] = [];
   let startIndex = 0;
@@ -243,7 +247,7 @@ function findMatches(text: string, query: string): [number, number][] {
       break;
     }
     matches.push([index, index + query.length]);
-    startIndex = index + 1;
+    startIndex = index + query.length; // 重複を防ぐためマッチ分だけ進める
   }
 
   return matches;
