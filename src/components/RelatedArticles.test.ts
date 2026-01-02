@@ -13,11 +13,11 @@
  * - 境界値・異常系のテスト
  */
 
-import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { describe, expect, it, beforeEach } from 'vitest';
-import RelatedArticles from './RelatedArticles.astro';
-import type { RelatedPostEntry } from '../utils/relatedArticles';
 import type { CollectionEntry } from 'astro:content';
+import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { RelatedPostEntry } from '../utils/relatedArticles';
+import RelatedArticles from './RelatedArticles.astro';
 
 // ========================================
 // テストヘルパー関数
@@ -88,8 +88,18 @@ describe('RelatedArticles component', () => {
     // TC-RAC-001: 関連記事リストを正しく表示する
     it('TC-RAC-001: 関連記事リストを正しく表示する', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createRelatedEntry({ id: 'post-1', title: '関連記事1', score: 2, commonTags: ['TypeScript', 'React'] }),
-        createRelatedEntry({ id: 'post-2', title: '関連記事2', score: 1, commonTags: ['TypeScript'] }),
+        createRelatedEntry({
+          id: 'post-1',
+          title: '関連記事1',
+          score: 2,
+          commonTags: ['TypeScript', 'React'],
+        }),
+        createRelatedEntry({
+          id: 'post-2',
+          title: '関連記事2',
+          score: 1,
+          commonTags: ['TypeScript'],
+        }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
@@ -182,7 +192,7 @@ describe('RelatedArticles component', () => {
     // TC-RAC-103: 関連記事が5件の場合も正常表示
     it('TC-RAC-103: 関連記事が5件の場合も正常表示', async () => {
       const relatedPosts: RelatedPostEntry[] = Array.from({ length: 5 }, (_, i) =>
-        createRelatedEntry({ id: `post-${i + 1}`, title: `関連記事${i + 1}` })
+        createRelatedEntry({ id: `post-${i + 1}`, title: `関連記事${i + 1}` }),
       );
 
       const result = await container.renderToString(RelatedArticles, {
@@ -203,9 +213,7 @@ describe('RelatedArticles component', () => {
   describe('アクセシビリティテストケース', () => {
     // TC-RAC-201: セマンティックHTML（section, h2）使用
     it('TC-RAC-201: セマンティックHTML（section, h2）使用', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createRelatedEntry({ id: 'post-1' }),
-      ];
+      const relatedPosts: RelatedPostEntry[] = [createRelatedEntry({ id: 'post-1' })];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
@@ -218,9 +226,7 @@ describe('RelatedArticles component', () => {
 
     // TC-RAC-202: aria-labelledby属性が設定される
     it('TC-RAC-202: aria-labelledby属性が設定される', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createRelatedEntry({ id: 'post-1' }),
-      ];
+      const relatedPosts: RelatedPostEntry[] = [createRelatedEntry({ id: 'post-1' })];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
@@ -248,9 +254,7 @@ describe('RelatedArticles component', () => {
 
     // TC-RAC-204: フォーカス可視化スタイルが設定される
     it('TC-RAC-204: フォーカス可視化スタイルが設定される', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createRelatedEntry({ id: 'post-1' }),
-      ];
+      const relatedPosts: RelatedPostEntry[] = [createRelatedEntry({ id: 'post-1' })];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
@@ -268,9 +272,7 @@ describe('RelatedArticles component', () => {
   describe('スタイリングテストケース', () => {
     // TC-RAC-301: ダークモード対応スタイルが設定される
     it('TC-RAC-301: ダークモード対応スタイルが設定される', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createRelatedEntry({ id: 'post-1' }),
-      ];
+      const relatedPosts: RelatedPostEntry[] = [createRelatedEntry({ id: 'post-1' })];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
@@ -282,9 +284,7 @@ describe('RelatedArticles component', () => {
 
     // TC-RAC-302: レスポンシブデザインが適用される
     it('TC-RAC-302: レスポンシブデザインが適用される', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createRelatedEntry({ id: 'post-1' }),
-      ];
+      const relatedPosts: RelatedPostEntry[] = [createRelatedEntry({ id: 'post-1' })];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },

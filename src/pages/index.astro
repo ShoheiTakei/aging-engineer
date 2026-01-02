@@ -1,6 +1,30 @@
 ---
-// Temporary index page - will be replaced by TASK-0011
+/**
+ * トップページ（記事一覧）
+ *
+ * 要件:
+ * - TASK-0011: トップページに記事一覧を実装
+ * - 最新5件の記事を表示
+ * - /blog/1（全記事一覧）へのリンクを追加
+ * - SEO対応（title, description, OGP）
+ *
+ * 信頼性: 🔵 タスク定義より
+ */
+
+import { getCollection } from 'astro:content';
+import BlogCard from '../components/BlogCard.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+// 全ブログ記事を取得（下書きを除外、公開日降順）
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+// 公開日で降順ソート
+const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// 最新5件を取得
+const latestPosts = sortedPosts.slice(0, 5);
 ---
 
 <BaseLayout
@@ -8,8 +32,53 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   description="エンジニアリングに関するブログ。プログラミング、技術トピック、開発ノウハウを発信します。"
   type="website"
 >
+  <Header siteTitle="エイジング・エンジニア" currentPath="/" />
+
   <div class="container-narrow py-12">
-    <h1 class="text-4xl font-bold mb-4">Aging Engineer Blog</h1>
-    <p class="text-lg text-gray-600 dark:text-gray-400">プロジェクト初期化完了。TASK-0001から実装を開始します。</p>
+    <!-- ページヘッダー -->
+    <header class="mb-12">
+      <h1 class="text-4xl font-bold mb-4">Aging Engineer Blog</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        エンジニアリングに関するブログ。プログラミング、技術トピック、開発ノウハウを発信します。
+      </p>
+    </header>
+
+    <!-- 最新記事セクション -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-6">最新記事</h2>
+
+      {latestPosts.length === 0 ? (
+        <p class="text-gray-600 dark:text-gray-400">記事はまだありません。</p>
+      ) : (
+        <ul class="grid gap-6 md:grid-cols-2" role="list" aria-label="最新記事一覧">
+          {latestPosts.map((post) => (
+            <li>
+              <BlogCard
+                href={`/blog/${post.id}`}
+                title={post.data.title}
+                description={post.data.description}
+                coverImage={post.data.coverImage}
+                tags={post.data.tags}
+                pubDate={post.data.pubDate}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+
+    <!-- 全記事一覧へのリンク（記事がある場合のみ表示） -->
+    {latestPosts.length > 0 && (
+      <div class="text-center">
+        <a
+          href="/blog/1"
+          class="inline-block px-6 py-3 bg-blue-600 dark:bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors duration-200"
+        >
+          すべての記事を見る
+        </a>
+      </div>
+    )}
   </div>
+
+  <Footer siteName="エイジング・エンジニア" />
 </BaseLayout>

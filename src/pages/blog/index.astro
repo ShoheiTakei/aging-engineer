@@ -1,6 +1,9 @@
 ---
 /**
- * ブログ記事一覧ページ（ページネーション付き）
+ * ブログ記事一覧ページ（1ページ目）
+ *
+ * /blog へのアクセス時に表示されるページ
+ * /blog/1 と同じ内容を表示（ちらつきなし）
  *
  * 要件:
  * - TASK-0012: ページネーション機能（5件/ページ）
@@ -11,7 +14,6 @@
  */
 
 import { getCollection } from 'astro:content';
-import type { GetStaticPathsOptions, Page } from 'astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Pagination from '../../components/Pagination.astro';
@@ -33,35 +35,43 @@ interface BlogPost {
 /** 1ページあたりの記事数 */
 const PAGE_SIZE = 5;
 
-export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
-  // 全ブログ記事を取得（下書きを除外、公開日降順）
-  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+// 全ブログ記事を取得（下書きを除外、公開日降順）
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 
-  // 公開日で降順ソート
-  const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+// 公開日で降順ソート
+const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
-  // ページネーション設定（5件/ページ）
-  return paginate(sortedPosts, { pageSize: 5 });
-}
+// 1ページ目のデータを作成
+const posts = sortedPosts.slice(0, PAGE_SIZE);
+const totalPages = Math.ceil(sortedPosts.length / PAGE_SIZE);
 
-interface Props {
-  page: Page<BlogPost>;
-}
-
-const { page } = Astro.props;
+// Paginationコンポーネント用のpageオブジェクトを手動で作成
+const page = {
+  data: posts,
+  start: 0,
+  end: Math.min(PAGE_SIZE - 1, sortedPosts.length - 1),
+  size: PAGE_SIZE,
+  total: sortedPosts.length,
+  currentPage: 1,
+  lastPage: totalPages,
+  url: {
+    current: '/blog',
+    prev: undefined,
+    next: totalPages > 1 ? '/blog/2' : undefined,
+    first: '/blog',
+    last: totalPages > 1 ? `/blog/${totalPages}` : '/blog',
+  },
+};
 ---
 
-<BaseLayout
-  title={`ブログ記事一覧${page.currentPage > 1 ? ` - ${page.currentPage}ページ目` : ''}`}
-  description="技術ブログの記事一覧です"
->
+<BaseLayout title="ブログ記事一覧" description="技術ブログの記事一覧です">
   <Header siteTitle="エイジング・エンジニア" currentPath="/blog" />
 
   <div class="container-narrow py-12">
     <header class="mb-8">
       <h1 class="text-4xl font-bold mb-2">ブログ記事一覧</h1>
       <p class="text-gray-600 dark:text-gray-400">
-        全{page.total}件中 {(page.currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(page.currentPage * PAGE_SIZE, page.total)}件を表示
+        全{page.total}件中 1〜{Math.min(PAGE_SIZE, page.total)}件を表示
       </p>
     </header>
 
