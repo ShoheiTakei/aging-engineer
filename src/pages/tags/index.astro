@@ -1,0 +1,241 @@
+---
+/**
+ * タグ一覧ページ
+ *
+ * TASK-0017: タグ一覧ページの実装
+ *
+ * 【機能概要】: すべてのタグと記事数を表示するページ
+ * 【実装方針】: セマンティックHTMLとWCAG 2.1 AA準拠のアクセシビリティを実現
+ * 【設計方針】: ゼロJavaScript、SSG専用、Islands Architecture活用による最高のパフォーマンス
+ * 【パフォーマンス】: ビルド時静的生成により実行時オーバーヘッドゼロ、Lighthouse 90+点対応
+ *
+ * 関連要件:
+ * - REQ-302: タグ一覧表示
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル設定
+ * - NFR-304: フォーカス可視化
+ *
+ * 信頼性: 🔵 要件定義書・アーキテクチャ設計に基づく実装
+ */
+
+import { getCollection } from 'astro:content';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// ========================================
+// タグ情報の型定義
+// ========================================
+
+/**
+ * タグと記事数の情報
+ */
+interface TagInfo {
+  /** タグ名（表示用） */
+  tag: string;
+  /** 記事数 */
+  count: number;
+  /** URLスラッグ */
+  slug: string;
+}
+
+// ========================================
+// ユーティリティ関数
+// ========================================
+
+/**
+ * タグからURLスラッグを生成する
+ * @param tag - タグ名
+ * @returns URLに使用できるスラッグ
+ *
+ * 【処理内容】:
+ * - 英語タグは小文字に変換
+ * - スペースはハイフンに変換
+ * - 日本語タグはそのまま使用
+ *
+ * 🔵 信頼性レベル: テストケース定義書に基づく実装
+ */
+function generateTagSlug(tag: string): string {
+  return tag.toLowerCase().replace(/\s+/g, '-');
+}
+
+// ========================================
+// データ取得
+// ========================================
+
+/**
+ * 【記事データ取得】
+ * Content Collections APIを使用して全記事を取得
+ * 🔵 信頼性レベル: architecture.md・content.config.tsより
+ */
+const allPosts = await getCollection('blog');
+
+/**
+ * 【公開記事のフィルタリング】
+ * 下書き記事（draft: true）を除外
+ * 🔵 信頼性レベル: REQ-501要件より
+ */
+const publishedPosts = allPosts.filter((post) => !post.data.draft);
+
+/**
+ * 【タグ集計処理】
+ * 各タグの記事数をカウントしてTagInfo配列を生成
+ *
+ * 【処理フロー】:
+ * 1. すべての公開記事のタグを収集
+ * 2. 各タグの出現回数をカウント
+ * 3. 記事数の多い順にソート
+ * 4. TagInfo配列として返却
+ *
+ * 🔵 信頼性レベル: REQ-302要件より
+ */
+const tagCounts = new Map<string, number>();
+for (const post of publishedPosts) {
+  for (const tag of post.data.tags) {
+    tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+  }
+}
+
+/**
+ * 【タグ情報配列】
+ * 記事数の多い順にソートしたタグ情報
+ */
+const tagInfos: TagInfo[] = [...tagCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([tag, count]) => ({
+    tag,
+    count,
+    slug: generateTagSlug(tag),
+  }));
+
+// ========================================
+// ページメタデータ
+// ========================================
+
+const pageTitle = 'タグ一覧 | Aging Engineer Blog';
+const pageDescription = 'すべてのタグと記事数を一覧表示しています。';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  ogType="website"
+>
+  <!--
+    【ページ構造】
+    Header + Main + Footer の3層構造
+    - Flexboxを使用してFooterを下部に固定
+    - セマンティックHTML（<main>）を使用
+    🔵 信頼性レベル: NFR-301要件に基づく実装
+  -->
+  <div class="min-h-screen flex flex-col">
+    <!--
+      【ヘッダー】
+      現在のページパス（/tags）を渡してナビゲーションをハイライト
+    -->
+    <Header siteTitle="Aging Engineer Blog" currentPath="/tags" />
+
+    <!--
+      【メインコンテンツ】
+      セマンティックHTMLとして<main>タグを使用（NFR-301）
+      aria-labelでコンテンツ領域を明示（NFR-303）
+    -->
+    <main class="flex-1 container-narrow py-8 md:py-12" aria-label="タグ一覧">
+      <!--
+        【ページヘッダー】
+        ページタイトルと説明文
+      -->
+      <header class="mb-8 md:mb-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          タグ一覧
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+          すべてのタグと記事数を一覧表示しています。
+        </p>
+      </header>
+
+      <!--
+        【タグリスト】
+        タグがある場合とない場合で表示を切り替え
+      -->
+      {tagInfos.length > 0 ? (
+        <!--
+          【タグ一覧セクション】
+          セマンティックHTMLとして<section>タグを使用（NFR-301）
+          aria-labelでセクションを明示（NFR-303）
+        -->
+        <section aria-label="タグ一覧">
+          <!--
+            【タグリスト】
+            グリッドレイアウトで整然と表示
+            - モバイル: 2列
+            - タブレット: 3列
+            - デスクトップ: 4列
+          -->
+          <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {tagInfos.map((tagInfo) => (
+              <li>
+                <!--
+                  【タグカード】
+                  各タグをカード形式で表示
+
+                  【スタイリング】:
+                  - 背景: bg-gray-50（ライト）、dark:bg-gray-800（ダーク）
+                  - ボーダー: border-gray-200（ライト）、dark:border-gray-700（ダーク）
+                  - ホバー時: 影を追加、ボーダー色を変更
+
+                  【アクセシビリティ】:
+                  - <a>タグでキーボードナビゲーション対応（NFR-302）
+                  - フォーカス可視化（NFR-304）
+
+                  🔵 信頼性レベル: NFR-302～NFR-304要件に基づく実装
+                -->
+                <a
+                  href={`/tags/${tagInfo.slug}`}
+                  class="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  <!--
+                    【タグ名】
+                    太字で目立つように表示
+                  -->
+                  <span class="block text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {tagInfo.tag}
+                  </span>
+
+                  <!--
+                    【記事数】
+                    「○件の記事」形式で表示
+                  -->
+                  <span class="block text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {tagInfo.count}件の記事
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <!--
+          【記事なしメッセージ】
+          タグが存在しない場合（記事がない、またはすべて下書き）
+          🔵 信頼性レベル: EDGE-001要件に基づく実装
+        -->
+        <section
+          aria-label="タグなし"
+          class="text-center py-12"
+        >
+          <p class="text-gray-500 dark:text-gray-400 text-lg">
+            現在、タグが設定された記事がありません。
+          </p>
+        </section>
+      )}
+    </main>
+
+    <!--
+      【フッター】
+      サイト名を渡してコピーライト表記
+    -->
+    <Footer siteName="Aging Engineer Blog" />
+  </div>
+</BaseLayout>

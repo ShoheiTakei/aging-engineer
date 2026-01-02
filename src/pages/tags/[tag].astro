@@ -1,0 +1,257 @@
+---
+/**
+ * [tag].astro - 個別タグページ
+ *
+ * TASK-0017: タグ一覧ページの実装
+ *
+ * 【機能概要】: 特定タグを持つ記事一覧を表示するページ
+ * 【実装方針】: セマンティックHTMLとWCAG 2.1 AA準拠のアクセシビリティを実現
+ * 【設計方針】: ゼロJavaScript、SSG専用、Islands Architecture活用による最高のパフォーマンス
+ * 【パフォーマンス】: ビルド時静的生成により実行時オーバーヘッドゼロ、Lighthouse 90+点対応
+ *
+ * 関連要件:
+ * - REQ-302: タグ一覧表示
+ * - REQ-303: タグ別記事一覧
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル設定
+ * - NFR-304: フォーカス可視化
+ *
+ * 信頼性: 🔵 要件定義書・アーキテクチャ設計に基づく実装
+ */
+
+import { getCollection } from 'astro:content';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate } from '../../utils/date';
+
+// ========================================
+// 静的パス生成
+// ========================================
+
+/**
+ * 【getStaticPaths】: 静的パスの生成
+ * 【設計方針】: すべての一意なタグに対してページを生成
+ * 🔵 信頼性: architecture.md、Astro公式ドキュメントより
+ */
+export async function getStaticPaths() {
+  /**
+   * タグからURLスラッグを生成する
+   * @param tag - タグ名
+   * @returns URLに使用できるスラッグ
+   *
+   * 【処理内容】:
+   * - 英語タグは小文字に変換
+   * - スペースはハイフンに変換
+   * - 日本語タグはそのまま使用
+   *
+   * 🔵 信頼性レベル: タグ一覧ページと同じロジック
+   */
+  const generateTagSlug = (tag: string): string => {
+    return tag.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // 【記事取得】: Content Collectionsから全記事を取得
+  const allPosts = await getCollection('blog');
+
+  // 【公開記事のフィルタリング】: 下書き記事を除外
+  const publishedPosts = allPosts.filter((post) => !post.data.draft);
+
+  // 【タグ収集】: すべての一意なタグを収集
+  const allTags = new Set<string>();
+  for (const post of publishedPosts) {
+    for (const tag of post.data.tags) {
+      allTags.add(tag);
+    }
+  }
+
+  // 【パス生成】: 各タグに対してパスを生成
+  return [...allTags].map((tag) => ({
+    params: { tag: generateTagSlug(tag) },
+    props: { tag, posts: publishedPosts.filter((post) => post.data.tags.includes(tag)) },
+  }));
+}
+
+// ========================================
+// Props取得
+// ========================================
+
+interface Props {
+  tag: string;
+  posts: Awaited<ReturnType<typeof getCollection<'blog'>>>;
+}
+
+const { tag, posts } = Astro.props;
+
+// 【記事ソート】: 公開日の新しい順にソート
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// ========================================
+// ページメタデータ
+// ========================================
+
+const pageTitle = `タグ: ${tag} | Aging Engineer Blog`;
+const pageDescription = `「${tag}」タグが付いた記事一覧です。${posts.length}件の記事があります。`;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  ogType="website"
+>
+  <!--
+    【ページ構造】
+    Header + Main + Footer の3層構造
+    - Flexboxを使用してFooterを下部に固定
+    - セマンティックHTML（<main>）を使用
+    🔵 信頼性レベル: NFR-301要件に基づく実装
+  -->
+  <div class="min-h-screen flex flex-col">
+    <!--
+      【ヘッダー】
+      現在のページパス（/tags）を渡してナビゲーションをハイライト
+    -->
+    <Header siteTitle="Aging Engineer Blog" currentPath="/tags" />
+
+    <!--
+      【メインコンテンツ】
+      セマンティックHTMLとして<main>タグを使用（NFR-301）
+      aria-labelでコンテンツ領域を明示（NFR-303）
+    -->
+    <main class="flex-1 container-narrow py-8 md:py-12" aria-label={`タグ「${tag}」の記事一覧`}>
+      <!--
+        【ページヘッダー】
+        タグ名と記事数を表示
+      -->
+      <header class="mb-8 md:mb-12">
+        <!--
+          【パンくずリスト風ナビゲーション】
+          タグ一覧ページへ戻るリンク
+        -->
+        <nav class="mb-4" aria-label="パンくずリスト">
+          <a
+            href="/tags"
+            class="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            タグ一覧
+          </a>
+        </nav>
+
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <span class="text-blue-600 dark:text-blue-400">#</span>{tag}
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+          {posts.length}件の記事
+        </p>
+      </header>
+
+      <!--
+        【記事リスト】
+        タグに関連する記事一覧を表示
+      -->
+      {sortedPosts.length > 0 ? (
+        <section aria-label="記事一覧">
+          <ul class="space-y-6">
+            {sortedPosts.map((post) => (
+              <li>
+                <!--
+                  【記事カード】
+                  各記事をカード形式で表示
+
+                  【スタイリング】:
+                  - 背景: bg-gray-50（ライト）、dark:bg-gray-800（ダーク）
+                  - ボーダー: border-gray-200（ライト）、dark:border-gray-700（ダーク）
+                  - ホバー時: 影を追加、ボーダー色を変更
+
+                  【アクセシビリティ】:
+                  - <a>タグでキーボードナビゲーション対応（NFR-302）
+                  - フォーカス可視化（NFR-304）
+
+                  🔵 信頼性レベル: NFR-302～NFR-304要件に基づく実装
+                -->
+                <a
+                  href={`/blog/${post.id}`}
+                  class="block p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
+                  <!--
+                    【記事タイトル】
+                    太字で目立つように表示
+                  -->
+                  <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    {post.data.title}
+                  </h2>
+
+                  <!--
+                    【記事説明】
+                    2行で省略表示
+                  -->
+                  <p class="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                    {post.data.description}
+                  </p>
+
+                  <!--
+                    【メタ情報】
+                    公開日とタグ一覧
+                  -->
+                  <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <time datetime={post.data.pubDate.toISOString()} class="flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>{formatDate(post.data.pubDate)}</span>
+                    </time>
+
+                    <!--
+                      【タグ一覧】
+                      記事に設定されているタグを表示
+                    -->
+                    {post.data.tags.length > 0 && (
+                      <div class="flex flex-wrap gap-1">
+                        {post.data.tags.map((postTag: string) => (
+                          <span
+                            class:list={[
+                              "inline-block px-2 py-0.5 text-xs font-medium rounded-full",
+                              postTag === tag
+                                ? "bg-blue-600 text-white dark:bg-blue-500"
+                                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            ]}
+                          >
+                            #{postTag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <!--
+          【記事なしメッセージ】
+          タグに関連する公開記事がない場合
+          🔵 信頼性レベル: EDGE-001要件に基づく実装
+        -->
+        <section
+          aria-label="記事なし"
+          class="text-center py-12"
+        >
+          <p class="text-gray-500 dark:text-gray-400 text-lg">
+            このタグに関連する記事はまだありません。
+          </p>
+        </section>
+      )}
+    </main>
+
+    <!--
+      【フッター】
+      サイト名を渡してコピーライト表記
+    -->
+    <Footer siteName="Aging Engineer Blog" />
+  </div>
+</BaseLayout>
