@@ -15,6 +15,27 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // CSS最小化設定 (TASK-0025: パフォーマンス最適化)
+      cssMinify: 'lightningcss',
+      // JS最小化設定
+      minify: 'esbuild',
+      // ソースマップを無効化（本番ビルド）
+      sourcemap: false,
+      // チャンクサイズ警告の閾値を500kBに設定
+      chunkSizeWarningLimit: 500,
+      rollupOptions: {
+        output: {
+          // 最適なチャンク分割戦略
+          manualChunks: (id) => {
+            // node_modulesを別チャンクに分離
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
   },
 
   markdown: {
