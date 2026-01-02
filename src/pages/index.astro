@@ -33,7 +33,7 @@ const latestPosts = sortedPosts.slice(0, 5);
   description={siteConfig.description}
   type="website"
 >
-  <Header siteTitle={siteConfig.name} currentPath="/" />
+  <Header slot="header" siteTitle={siteConfig.name} currentPath="/" />
 
   <div class="container-narrow py-12">
     <!-- ページヘッダー -->
@@ -81,5 +81,5 @@ const latestPosts = sortedPosts.slice(0, 5);
     )}
   </div>
 
-  <Footer siteName={siteConfig.name} />
+  <Footer slot="footer" siteName={siteConfig.name} />
 </BaseLayout>

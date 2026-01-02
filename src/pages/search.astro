@@ -23,7 +23,7 @@ import { siteConfig } from '../config/site';
 ---
 
 <BaseLayout title="記事検索" description="ブログ記事を検索できます">
-  <Header siteTitle={siteConfig.name} currentPath="/search" />
+  <Header slot="header" siteTitle={siteConfig.name} currentPath="/search" />
 
   <div class="container-narrow py-12">
     <header class="mb-8">
@@ -112,7 +112,7 @@ import { siteConfig } from '../config/site';
     </div>
   </div>
 
-  <Footer siteName={siteConfig.name} />
+  <Footer slot="footer" siteName={siteConfig.name} />
 </BaseLayout>
 
 <script>

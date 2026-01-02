@@ -56,7 +56,7 @@ const { page } = Astro.props;
   title={`ブログ記事一覧${page.currentPage > 1 ? ` - ${page.currentPage}ページ目` : ''}`}
   description="技術ブログの記事一覧です"
 >
-  <Header siteTitle={siteConfig.name} currentPath="/blog" />
+  <Header slot="header" siteTitle={siteConfig.name} currentPath="/blog" />
 
   <div class="container-narrow py-12">
     <header class="mb-8">
@@ -110,5 +110,5 @@ const { page } = Astro.props;
     <Pagination page={page} />
   </div>
 
-  <Footer siteName={siteConfig.name} />
+  <Footer slot="footer" siteName={siteConfig.name} />
 </BaseLayout>

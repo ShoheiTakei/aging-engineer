@@ -164,9 +164,15 @@ const faviconBase = '/assets/favicons';
 			メインコンテンツへスキップ
 		</a>
 
+		<!-- ヘッダー -->
+		<slot name="header" />
+
 		<!-- メインコンテンツ (NFR-301: セマンティックHTML) -->
 		<main id="main-content" class="flex-grow">
 			<slot />
 		</main>
+
+		<!-- フッター -->
+		<slot name="footer" />
 	</body>
 </html>
