@@ -69,7 +69,6 @@ interface BlogPostInput {
     description: string;
     pubDate: Date;
     tags: string[];
-    draft: boolean;
   };
   body: string;
 }
