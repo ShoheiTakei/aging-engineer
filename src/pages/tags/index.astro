@@ -1,0 +1,90 @@
+---
+/**
+ * タグ一覧ページ
+ *
+ * 要件:
+ * - TASK-0017: タグ一覧ページの実装
+ * - REQ-302: タグ一覧ページの提供（全タグ表示、記事数表示）
+ * - TC-301-01: タグ一覧ページの表示
+ * - TC-301-B01: タグが1件もない場合の表示
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-101～NFR-102: SEO対応（メタタグ、OGP）
+ *
+ * 信頼性: 🔵 テストケース定義・要件定義より
+ */
+
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// 【データ取得】: 全記事を取得（下書き除外）
+// 🔵 信頼性レベル: REQ-302、architecture.md より
+const allPosts = await getCollection('blog', ({ data }) => {
+  return data.draft !== true;
+});
+
+// 【タグ抽出】: すべてのタグを重複なく抽出
+// 🔵 信頼性レベル: テストケースTC-TL-001より
+const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags || []))];
+
+// 【タグカウント】: 各タグの記事数をカウント
+// 🔵 信頼性レベル: テストケースTC-TL-001、TC-TL-003より
+const tagCounts = allTags.map((tag) => ({
+  name: tag,
+  count: allPosts.filter((post) => post.data.tags?.includes(tag)).length,
+}));
+
+// 【ソート】: タグ名でアルファベット順にソート
+const sortedTags = tagCounts.sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<BaseLayout
+  title="タグ一覧"
+  description="ブログ記事のタグ一覧です。タグをクリックすると、そのタグが付いた記事の一覧を表示します。"
+  url="/tags/"
+  type="website"
+>
+  <div class="container-narrow py-12">
+    <!-- 【ヘッダー】: ページタイトルと説明 -->
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-2">タグ一覧</h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        全{sortedTags.length}件のタグ
+      </p>
+    </header>
+
+    <!-- 【タグリスト】: タグが存在する場合 -->
+    {
+      sortedTags.length > 0 ? (
+        <ul class="space-y-4" role="list" aria-label="タグ一覧">
+          {sortedTags.map((tag) => (
+            <li>
+              <a
+                href={`/tags/${encodeURIComponent(tag.name)}/`}
+                class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
+                aria-label={`${tag.name}タグの記事一覧を表示（${tag.count}件）`}
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    {tag.name}
+                  </span>
+                  <span class="text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                    {tag.count}件
+                  </span>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <!-- 【エッジケース】: タグが1件もない場合 -->
+        <!-- 🔵 信頼性レベル: TC-301-B01、EDGE-001より -->
+        <div class="text-center py-12">
+          <p class="text-gray-600 dark:text-gray-400 text-lg">
+            タグがありません
+          </p>
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>
