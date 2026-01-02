@@ -26,7 +26,7 @@ export async function GET(context: APIContext) {
     // フィードのメタ情報
     title: 'aging-engineer',
     description: 'エイジングエンジニアの技術ブログ',
-    site: context.site?.toString() ?? 'https://aging-engineer.pages.dev',
+    site: context.site?.toString() ?? 'https://aging-engineer.com',
 
     // 記事アイテム
     items: sortedPosts.map((post) => ({

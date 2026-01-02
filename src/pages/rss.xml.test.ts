@@ -95,7 +95,7 @@ describe('RSS Feed', () => {
 
   describe('フィードメタデータ', () => {
     it('正しいサイトURLを持つ', () => {
-      const siteUrl = 'https://aging-engineer.pages.dev';
+      const siteUrl = 'https://aging-engineer.com';
       expect(siteUrl).toMatch(/^https:\/\//);
     });
 
