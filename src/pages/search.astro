@@ -16,14 +16,10 @@
  * - 軽量実装: 外部ライブラリ不使用でパフォーマンス確保
  */
 
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { siteConfig } from '../config/site';
 ---
 
-<BaseLayout title="記事検索" description="ブログ記事を検索できます">
-  <Header siteTitle={siteConfig.name} currentPath="/search" />
+<BaseLayout currentPath="/search" title="記事検索" description="ブログ記事を検索できます">
 
   <div class="container-narrow py-12">
     <header class="mb-8">
@@ -112,7 +108,6 @@ import { siteConfig } from '../config/site';
     </div>
   </div>
 
-  <Footer siteName={siteConfig.name} />
 </BaseLayout>
 
 <script>
