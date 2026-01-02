@@ -1,0 +1,156 @@
+---
+/**
+ * タグ別記事一覧ページ（ページネーション付き）
+ *
+ * 要件:
+ * - REQ-303: タグ別記事一覧ページの提供
+ * - REQ-201: ページネーション機能（5件/ページ）
+ * - NFR-301: セマンティックHTML
+ * - NFR-302: キーボードナビゲーション対応
+ *
+ * 信頼性: 🔵 タスク定義より
+ */
+
+import { getCollection } from 'astro:content';
+import type { GetStaticPathsOptions, Page } from 'astro';
+import Pagination from '../../../components/Pagination.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+interface BlogPost {
+  id: string;
+  data: {
+    title: string;
+    description: string;
+    pubDate: Date;
+    updatedDate: Date;
+    coverImage: string;
+    tags: string[];
+    draft: boolean;
+  };
+}
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  /** 1ページあたりの記事数 */
+  const PAGE_SIZE = 5;
+
+  // 全ブログ記事を取得（下書きを除外）
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+  // 全タグを収集
+  const allTags = new Set<string>();
+  for (const post of allPosts) {
+    for (const tag of post.data.tags) {
+      allTags.add(tag);
+    }
+  }
+
+  // タグごとにページを生成
+  const paths = [];
+  for (const tag of allTags) {
+    // 該当タグの記事を抽出して公開日降順ソート
+    const taggedPosts = allPosts
+      .filter((post) => post.data.tags.includes(tag))
+      .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+    // ページネーション設定（5件/ページ）
+    const paginatedPaths = paginate(taggedPosts, {
+      params: { tag },
+      pageSize: PAGE_SIZE,
+    });
+
+    paths.push(...paginatedPaths);
+  }
+
+  return paths;
+}
+
+interface Props {
+  page: Page<BlogPost>;
+}
+
+const { page } = Astro.props;
+const { tag } = Astro.params;
+const PAGE_SIZE = 5;
+---
+
+<BaseLayout
+  title={`タグ「${tag}」の記事一覧${page.currentPage > 1 ? ` - ${page.currentPage}ページ目` : ''}`}
+  description={`タグ「${tag}」が付いた記事の一覧です`}
+>
+  <div class="container-narrow py-12">
+    <header class="mb-8">
+      <nav aria-label="パンくずリスト" class="mb-4">
+        <ol class="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <li>
+            <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">ホーム</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a href="/tags" class="hover:text-blue-600 dark:hover:text-blue-400">タグ一覧</a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page">
+            <span class="font-semibold">{tag}</span>
+          </li>
+        </ol>
+      </nav>
+
+      <h1 class="text-4xl font-bold mb-2">
+        タグ「<span class="text-blue-600 dark:text-blue-400">{tag}</span>」の記事一覧
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        全{page.total}件中 {(page.currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(page.currentPage * PAGE_SIZE, page.total)}件を表示
+      </p>
+    </header>
+
+    <!-- 記事一覧 -->
+    <ul class="space-y-8" role="list" aria-label={`タグ「${tag}」の記事一覧`}>
+      {page.data.map((post) => (
+        <li>
+          <article class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow">
+            <a
+              href={`/blog/${post.id}`}
+              class="block group"
+              aria-label={`${post.data.title}を読む`}
+            >
+              <h2 class="text-2xl font-semibold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {post.data.title}
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">
+                {post.data.description}
+              </p>
+              <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-500">
+                <time datetime={post.data.pubDate.toISOString()}>
+                  {post.data.pubDate.toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+                {post.data.tags.length > 0 && (
+                  <div class="flex flex-wrap gap-2" aria-label="タグ">
+                    {post.data.tags.map((postTag) => (
+                      <a
+                        href={`/tags/${postTag}`}
+                        class={`px-2 py-1 rounded text-xs ${
+                          postTag === tag
+                            ? 'bg-blue-600 text-white dark:bg-blue-500'
+                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {postTag}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </a>
+          </article>
+        </li>
+      ))}
+    </ul>
+
+    <!-- ページネーション -->
+    <Pagination page={page} />
+  </div>
+</BaseLayout>
