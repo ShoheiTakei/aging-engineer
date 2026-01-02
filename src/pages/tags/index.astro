@@ -60,7 +60,7 @@ const sortedTags = tagCounts.sort((a, b) => a.name.localeCompare(b.name));
           {sortedTags.map((tag) => (
             <li>
               <a
-                href={`/tags/${tag.name}/`}
+                href={`/tags/${encodeURIComponent(tag.name)}/`}
                 class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400"
                 aria-label={`${tag.name}タグの記事一覧を表示（${tag.count}件）`}
               >
