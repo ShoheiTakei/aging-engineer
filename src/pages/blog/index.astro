@@ -14,24 +14,8 @@
  */
 
 import { getCollection } from 'astro:content';
-import Footer from '../../components/Footer.astro';
-import Header from '../../components/Header.astro';
 import Pagination from '../../components/Pagination.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { siteConfig } from '../../config/site';
-
-interface BlogPost {
-  id: string;
-  data: {
-    title: string;
-    description: string;
-    pubDate: Date;
-    updatedDate: Date;
-    coverImage: string;
-    tags: string[];
-    draft: boolean;
-  };
-}
 
 /** 1ページあたりの記事数 */
 const PAGE_SIZE = 5;
@@ -65,8 +49,7 @@ const page = {
 };
 ---
 
-<BaseLayout title="ブログ記事一覧" description="技術ブログの記事一覧です">
-  <Header slot="header" siteTitle={siteConfig.name} currentPath="/blog" />
+<BaseLayout currentPath="/blog" title="ブログ記事一覧" description="技術ブログの記事一覧です">
 
   <div class="container-narrow py-12">
     <header class="mb-8">
@@ -120,5 +103,4 @@ const page = {
     <Pagination page={page} />
   </div>
 
-  <Footer slot="footer" siteName={siteConfig.name} />
 </BaseLayout>

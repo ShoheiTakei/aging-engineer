@@ -12,8 +12,6 @@
 
 import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
-import Footer from '../../components/Footer.astro';
-import Header from '../../components/Header.astro';
 import PostNavigation from '../../components/PostNavigation.astro';
 import RelatedArticles from '../../components/RelatedArticles.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
@@ -22,7 +20,6 @@ import { formatDate } from '../../utils/date';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import { getRelatedPosts } from '../../utils/relatedArticles';
 import { generateTOC } from '../../utils/toc';
-import { siteConfig } from '../../config/site';
 
 type BlogPost = CollectionEntry<'blog'>;
 
@@ -68,6 +65,7 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
 ---
 
 <BaseLayout
+  currentPath={`/blog/${post.id}`}
   title={post.data.title}
   description={post.data.description}
   type="article"
@@ -75,7 +73,6 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
   modifiedTime={post.data.updatedDate}
   tags={post.data.tags}
 >
-  <Header slot="header" siteTitle={siteConfig.name} currentPath={`/blog/${post.id}`} />
 
   <article class="container-narrow py-12">
     <!-- 記事ヘッダー -->
@@ -149,5 +146,4 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
     <PostNavigation prevPost={prevPost} nextPost={nextPost} />
   </article>
 
-  <Footer slot="footer" siteName={siteConfig.name} />
 </BaseLayout>
