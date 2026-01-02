@@ -30,12 +30,11 @@
 import ThemeToggle from './ThemeToggle.astro';
 
 /**
- * 【画像最適化】
- * Astro Image コンポーネントを使用してWebP/AVIF変換とレスポンシブ画像を自動生成
+ * 【ロゴ画像】
+ * public/assets/logo/site-logo.png を使用
+ * 静的アセットとして配信（最適化なし）
  * 🔵 信頼性レベル: CLAUDE.md開発規約に基づく実装
  */
-import { Image } from 'astro:assets';
-import siteLogo from 'public/assets/logo/site-logo.png';
 
 interface Props {
   /**
@@ -137,12 +136,12 @@ const navItems = [
         🔵 信頼性レベル: テストケース定義書（TC-H-104）に基づく実装
       -->
       <div class="flex items-center gap-3">
-        <Image
-          src={siteLogo}
+        <img
+          src="/assets/logo/site-logo.png"
           alt="Aging Engineer Logo"
           class="w-10 h-10 md:w-12 md:h-12"
-          width={40}
-          height={40}
+          width="40"
+          height="40"
         />
         <h1
           class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate"
