@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://aging-engineer.pages.dev',
+  site: 'https://aging-engineer.com',
 
   integrations: [
     sitemap({
