@@ -1,0 +1,59 @@
+---
+/**
+ * TableOfContents - 目次コンポーネント
+ *
+ * 関連要件:
+ * - REQ-901: 記事の見出し（h2, h3）から目次を自動生成
+ * - REQ-112: 記事詳細ページで目次を表示
+ * - EDGE-104: 見出しが存在しない記事は、目次を表示しないようにする
+ * - NFR-301: セマンティックHTML
+ * - NFR-302: キーボードナビゲーション対応
+ *
+ * 信頼性: 🔵 タスク定義より
+ */
+
+import type { TOCItem, TOCResult } from '../utils/toc';
+
+interface Props {
+  toc: TOCResult;
+}
+
+const { toc } = Astro.props;
+---
+
+{toc.hasContent && (
+  <nav
+    aria-label="目次"
+    class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 my-8"
+  >
+    <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+      目次
+    </h2>
+    <ol class="space-y-2" role="list">
+      {toc.items.map((item: TOCItem) => (
+        <li>
+          <a
+            href={`#${item.slug}`}
+            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors block py-1"
+          >
+            {item.text}
+          </a>
+          {item.children.length > 0 && (
+            <ol class="ml-4 mt-1 space-y-1" role="list">
+              {item.children.map((child: TOCItem) => (
+                <li>
+                  <a
+                    href={`#${child.slug}`}
+                    class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors block py-1"
+                  >
+                    {child.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          )}
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}

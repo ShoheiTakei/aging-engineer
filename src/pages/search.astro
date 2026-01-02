@@ -1,0 +1,501 @@
+---
+/**
+ * 検索ページ
+ *
+ * 要件:
+ * - REQ-401: 記事検索機能（タイトル・本文から全文検索、部分一致）
+ * - REQ-402: 検索結果を関連度順に表示
+ * - NFR-001: Lighthouse 90+点維持（外部ライブラリ不使用）
+ * - NFR-301: セマンティックHTML使用
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル適切な設定
+ *
+ * 実装方針:
+ * - SSG対応: ビルド時に検索インデックスをJSONとして生成
+ * - クライアントサイド検索: JavaScriptで検索処理を実行
+ * - 軽量実装: 外部ライブラリ不使用でパフォーマンス確保
+ */
+
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="記事検索" description="ブログ記事を検索できます">
+  <Header siteTitle="エイジング・エンジニア" currentPath="/search" />
+
+  <div class="container-narrow py-12">
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold mb-2">記事検索</h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        キーワードでブログ記事を検索できます
+      </p>
+    </header>
+
+    <!-- 検索フォーム -->
+    <div class="mb-8">
+      <label for="search-input" class="sr-only">検索キーワード</label>
+      <div class="relative">
+        <input
+          type="search"
+          id="search-input"
+          name="q"
+          placeholder="検索キーワードを入力..."
+          autocomplete="off"
+          class="w-full px-4 py-3 pl-12 text-lg border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          aria-label="記事を検索"
+          aria-describedby="search-help"
+        />
+        <!-- 検索アイコン -->
+        <svg
+          class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+      <p id="search-help" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        タイトル、説明、本文、タグから検索します
+      </p>
+    </div>
+
+    <!-- 検索結果 -->
+    <div id="search-results" aria-live="polite" aria-atomic="true">
+      <!-- 初期メッセージ -->
+      <p
+        id="initial-message"
+        class="text-center text-gray-500 dark:text-gray-400 py-8"
+      >
+        キーワードを入力して検索してください
+      </p>
+
+      <!-- 検索中メッセージ -->
+      <p
+        id="loading-message"
+        class="hidden text-center text-gray-500 dark:text-gray-400 py-8"
+      >
+        検索中...
+      </p>
+
+      <!-- 検索結果なしメッセージ -->
+      <p
+        id="no-results-message"
+        class="hidden text-center text-gray-500 dark:text-gray-400 py-8"
+      >
+        検索結果が見つかりませんでした
+      </p>
+
+      <!-- 検索結果リスト -->
+      <ul
+        id="results-list"
+        class="hidden space-y-6"
+        role="list"
+        aria-label="検索結果"
+      >
+      </ul>
+
+      <!-- 検索結果数 -->
+      <p
+        id="results-count"
+        class="hidden text-sm text-gray-500 dark:text-gray-400 mb-4"
+      >
+      </p>
+    </div>
+  </div>
+
+  <Footer siteName="エイジング・エンジニア" />
+</BaseLayout>
+
+<script>
+  /**
+   * クライアントサイド検索機能
+   *
+   * 実装方針:
+   * - ビルド時に生成された検索インデックス（/search-index.json）を使用
+   * - デバウンス処理で入力中の過剰な検索を防止
+   * - URLのクエリパラメータと連携してブックマーク可能に
+   */
+
+  interface SearchIndexItem {
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    pubDate: string;
+  }
+
+  interface MatchInfo {
+    field: 'title' | 'description' | 'body' | 'tags';
+    indices: [number, number][];
+  }
+
+  interface SearchResult {
+    item: SearchIndexItem;
+    score: number;
+    matches: MatchInfo[];
+  }
+
+  // DOM要素の取得と検証
+  const searchInputEl = document.getElementById('search-input');
+  const initialMessageEl = document.getElementById('initial-message');
+  const loadingMessageEl = document.getElementById('loading-message');
+  const noResultsMessageEl = document.getElementById('no-results-message');
+  const resultsListEl = document.getElementById('results-list');
+  const resultsCountEl = document.getElementById('results-count');
+
+  // 必要なDOM要素が存在しない場合は初期化を中止
+  if (
+    !searchInputEl ||
+    !initialMessageEl ||
+    !loadingMessageEl ||
+    !noResultsMessageEl ||
+    !resultsListEl ||
+    !resultsCountEl
+  ) {
+    console.error('検索ページの初期化に失敗しました：必要なDOM要素が見つかりません');
+    throw new Error('検索ページの初期化に失敗しました');
+  }
+
+  // 型を確定させた変数に再代入
+  const searchInput = searchInputEl as HTMLInputElement;
+  const initialMessage = initialMessageEl;
+  const loadingMessage = loadingMessageEl;
+  const noResultsMessage = noResultsMessageEl;
+  const resultsList = resultsListEl;
+  const resultsCount = resultsCountEl;
+
+  // 検索インデックスのキャッシュ
+  let searchIndex: SearchIndexItem[] | null = null;
+
+  // スコアリングの重み付け
+  const SCORE_WEIGHTS = {
+    title: 10,
+    tags: 8,
+    description: 5,
+    body: 1,
+  } as const;
+
+  /**
+   * 検索インデックスを読み込む
+   */
+  async function loadSearchIndex(): Promise<SearchIndexItem[]> {
+    if (searchIndex) {
+      return searchIndex;
+    }
+
+    const response = await fetch('/search-index.json');
+    if (!response.ok) {
+      throw new Error('検索インデックスの読み込みに失敗しました');
+    }
+
+    searchIndex = await response.json();
+    return searchIndex!;
+  }
+
+  /**
+   * テキスト内でクエリにマッチする位置を検索
+   */
+  function findMatches(text: string, query: string): [number, number][] {
+    const normalizedText = text.toLowerCase();
+    const matches: [number, number][] = [];
+    let startIndex = 0;
+
+    while (true) {
+      const index = normalizedText.indexOf(query, startIndex);
+      if (index === -1) {
+        break;
+      }
+      matches.push([index, index + query.length]);
+      startIndex = index + query.length;
+    }
+
+    return matches;
+  }
+
+  /**
+   * 検索を実行
+   */
+  function searchArticles(
+    index: SearchIndexItem[],
+    query: string
+  ): SearchResult[] {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      return [];
+    }
+
+    const normalizedQuery = trimmedQuery.toLowerCase();
+    const results: SearchResult[] = [];
+
+    for (const item of index) {
+      const matches: MatchInfo[] = [];
+      let score = 0;
+
+      // タイトルの検索
+      const titleMatches = findMatches(item.title, normalizedQuery);
+      if (titleMatches.length > 0) {
+        score += SCORE_WEIGHTS.title * titleMatches.length;
+        matches.push({ field: 'title', indices: titleMatches });
+      }
+
+      // タグの検索
+      const tagMatches: [number, number][] = [];
+      for (const tag of item.tags) {
+        const tagMatch = findMatches(tag, normalizedQuery);
+        if (tagMatch.length > 0) {
+          tagMatches.push(...tagMatch);
+          score += SCORE_WEIGHTS.tags;
+        }
+      }
+      if (tagMatches.length > 0) {
+        matches.push({ field: 'tags', indices: tagMatches });
+      }
+
+      // 説明の検索
+      const descMatches = findMatches(item.description, normalizedQuery);
+      if (descMatches.length > 0) {
+        score += SCORE_WEIGHTS.description * descMatches.length;
+        matches.push({ field: 'description', indices: descMatches });
+      }
+
+      // 本文の検索
+      const bodyMatches = findMatches(item.body, normalizedQuery);
+      if (bodyMatches.length > 0) {
+        score += SCORE_WEIGHTS.body * bodyMatches.length;
+        matches.push({ field: 'body', indices: bodyMatches });
+      }
+
+      if (matches.length > 0) {
+        results.push({ item, score, matches });
+      }
+    }
+
+    // スコアの降順でソート
+    results.sort((a, b) => b.score - a.score);
+
+    return results;
+  }
+
+  /**
+   * テキストをハイライト表示用にエスケープ
+   */
+  function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * マッチ箇所をハイライト表示
+   */
+  function highlightText(
+    text: string,
+    indices: [number, number][]
+  ): string {
+    if (indices.length === 0) {
+      return escapeHtml(text);
+    }
+
+    // インデックスを開始位置でソート
+    const sortedIndices = [...indices].sort((a, b) => a[0] - b[0]);
+
+    let result = '';
+    let lastIndex = 0;
+
+    for (const [start, end] of sortedIndices) {
+      // マッチ前のテキスト
+      result += escapeHtml(text.slice(lastIndex, start));
+      // マッチしたテキスト（ハイライト）
+      result += `<mark class="bg-yellow-200 dark:bg-yellow-700 text-gray-900 dark:text-gray-100 px-0.5 rounded">${escapeHtml(text.slice(start, end))}</mark>`;
+      lastIndex = end;
+    }
+
+    // 残りのテキスト
+    result += escapeHtml(text.slice(lastIndex));
+
+    return result;
+  }
+
+  /**
+   * 日付をフォーマット
+   */
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+
+  /**
+   * 検索結果を表示
+   */
+  function displayResults(results: SearchResult[]): void {
+    // すべてのメッセージを非表示
+    initialMessage.classList.add('hidden');
+    loadingMessage.classList.add('hidden');
+    noResultsMessage.classList.add('hidden');
+    resultsList.classList.add('hidden');
+    resultsCount.classList.add('hidden');
+
+    if (results.length === 0) {
+      noResultsMessage.classList.remove('hidden');
+      return;
+    }
+
+    // 検索結果数を表示
+    resultsCount.textContent = `${results.length}件の記事が見つかりました`;
+    resultsCount.classList.remove('hidden');
+
+    // 検索結果リストを構築
+    resultsList.innerHTML = results
+      .map((result) => {
+        const { item, matches } = result;
+
+        // タイトルのハイライト
+        const titleMatch = matches.find((m) => m.field === 'title');
+        const highlightedTitle = titleMatch
+          ? highlightText(item.title, titleMatch.indices)
+          : escapeHtml(item.title);
+
+        // 説明のハイライト
+        const descMatch = matches.find((m) => m.field === 'description');
+        const highlightedDesc = descMatch
+          ? highlightText(item.description, descMatch.indices)
+          : escapeHtml(item.description);
+
+        // タグのHTML
+        const tagsHtml =
+          item.tags.length > 0
+            ? `<div class="flex flex-wrap gap-2 mt-3">
+            ${item.tags
+              .map(
+                (tag) =>
+                  `<a href="/tags/${encodeURIComponent(tag)}" class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-700 dark:hover:text-blue-300 no-underline">#${escapeHtml(tag)}</a>`
+              )
+              .join('')}
+          </div>`
+            : '';
+
+        return `
+        <li>
+          <article class="card p-6">
+            <a href="/blog/${item.slug}" class="block group no-underline">
+              <h2 class="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                ${highlightedTitle}
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400 mb-2">
+                ${highlightedDesc}
+              </p>
+              <time datetime="${item.pubDate}" class="text-sm text-gray-500 dark:text-gray-400">
+                ${formatDate(item.pubDate)}
+              </time>
+            </a>
+            ${tagsHtml}
+          </article>
+        </li>
+      `;
+      })
+      .join('');
+
+    resultsList.classList.remove('hidden');
+  }
+
+  /**
+   * UIの状態を更新
+   */
+  function showLoading(): void {
+    initialMessage.classList.add('hidden');
+    loadingMessage.classList.remove('hidden');
+    noResultsMessage.classList.add('hidden');
+    resultsList.classList.add('hidden');
+    resultsCount.classList.add('hidden');
+  }
+
+  function showInitial(): void {
+    initialMessage.classList.remove('hidden');
+    loadingMessage.classList.add('hidden');
+    noResultsMessage.classList.add('hidden');
+    resultsList.classList.add('hidden');
+    resultsCount.classList.add('hidden');
+  }
+
+  /**
+   * デバウンス関数
+   */
+  function debounce(
+    func: (query: string) => Promise<void>,
+    wait: number
+  ): (query: string) => void {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    return (query: string) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => func(query), wait);
+    };
+  }
+
+  /**
+   * 検索を実行してUIを更新
+   */
+  async function performSearch(query: string): Promise<void> {
+    const trimmedQuery = query.trim();
+
+    // URLパラメータを更新
+    const url = new URL(window.location.href);
+    if (trimmedQuery) {
+      url.searchParams.set('q', trimmedQuery);
+    } else {
+      url.searchParams.delete('q');
+    }
+    window.history.replaceState({}, '', url.toString());
+
+    if (!trimmedQuery) {
+      showInitial();
+      return;
+    }
+
+    showLoading();
+
+    try {
+      const index = await loadSearchIndex();
+      const results = searchArticles(index, trimmedQuery);
+      displayResults(results);
+    } catch (error) {
+      console.error('検索エラー:', error);
+      noResultsMessage.textContent =
+        '検索中にエラーが発生しました。ページを再読み込みしてください。';
+      noResultsMessage.classList.remove('hidden');
+      loadingMessage.classList.add('hidden');
+    }
+  }
+
+  // デバウンス付きの検索実行
+  const debouncedSearch = debounce(performSearch, 300);
+
+  // 入力イベントのリスナー
+  searchInput.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    debouncedSearch(target.value);
+  });
+
+  // 初期ロード時にURLパラメータから検索クエリを取得
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialQuery = urlParams.get('q');
+  if (initialQuery) {
+    searchInput.value = initialQuery;
+    performSearch(initialQuery);
+  }
+</script>

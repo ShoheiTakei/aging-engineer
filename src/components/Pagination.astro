@@ -1,0 +1,134 @@
+---
+/**
+ * ページネーションコンポーネント
+ *
+ * 要件:
+ * - TASK-0012: ページネーション機能
+ * - NFR-301: セマンティックHTML（nav要素使用）
+ * - NFR-302: キーボードナビゲーション対応
+ * - NFR-303: ARIAラベル適切な設定
+ *
+ * 信頼性: 🔵 タスク定義より
+ */
+
+import type { Page } from 'astro';
+
+interface Props {
+  page: Page<unknown>;
+}
+
+const { page } = Astro.props;
+const { currentPage, lastPage, url } = page;
+
+// 表示するページ番号を計算（現在のページを中心に最大5ページ表示）
+function getPageNumbers(current: number, total: number): number[] {
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  // 現在のページを中心に前後2ページを表示
+  let start = Math.max(1, current - 2);
+  let end = Math.min(total, current + 2);
+
+  // 端に寄っている場合は調整
+  if (current <= 2) {
+    end = 5;
+  } else if (current >= total - 1) {
+    start = total - 4;
+  }
+
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
+
+const pageNumbers = getPageNumbers(currentPage, lastPage);
+---
+
+{lastPage > 1 && (
+  <nav
+    class="mt-12 flex justify-center"
+    aria-label="ページネーション"
+    data-testid="pagination"
+  >
+    <ul class="flex items-center gap-2">
+      <!-- 最初のページ -->
+      {currentPage > 1 && (
+        <li>
+          <a
+            href={url.first}
+            class="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="最初のページへ"
+            data-testid="pagination-first"
+          >
+            «
+          </a>
+        </li>
+      )}
+
+      <!-- 前のページ -->
+      {url.prev && (
+        <li>
+          <a
+            href={url.prev}
+            class="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="前のページへ"
+            data-testid="pagination-prev"
+          >
+            ‹
+          </a>
+        </li>
+      )}
+
+      <!-- ページ番号 -->
+      {pageNumbers.map((num) => (
+        <li>
+          {num === currentPage ? (
+            <span
+              class="px-4 py-2 rounded bg-blue-600 text-white font-medium"
+              aria-current="page"
+              data-testid="pagination-current"
+            >
+              {num}
+            </span>
+          ) : (
+            <a
+              href={`/blog/${num}`}
+              class="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label={`${num}ページ目へ`}
+              data-testid={`pagination-page-${num}`}
+            >
+              {num}
+            </a>
+          )}
+        </li>
+      ))}
+
+      <!-- 次のページ -->
+      {url.next && (
+        <li>
+          <a
+            href={url.next}
+            class="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="次のページへ"
+            data-testid="pagination-next"
+          >
+            ›
+          </a>
+        </li>
+      )}
+
+      <!-- 最後のページ -->
+      {currentPage < lastPage && (
+        <li>
+          <a
+            href={url.last}
+            class="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="最後のページへ"
+            data-testid="pagination-last"
+          >
+            »
+          </a>
+        </li>
+      )}
+    </ul>
+  </nav>
+)}
