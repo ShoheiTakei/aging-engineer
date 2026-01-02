@@ -22,6 +22,7 @@ import { formatDate } from '../../utils/date';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import { getRelatedPosts } from '../../utils/relatedArticles';
 import { generateTOC } from '../../utils/toc';
+import { siteConfig } from '../../config/site';
 
 type BlogPost = CollectionEntry<'blog'>;
 
@@ -74,7 +75,7 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
   modifiedTime={post.data.updatedDate}
   tags={post.data.tags}
 >
-  <Header siteTitle="aging-engineer" currentPath={`/blog/${post.id}`} />
+  <Header siteTitle={siteConfig.name} currentPath={`/blog/${post.id}`} />
 
   <article class="container-narrow py-12">
     <!-- 記事ヘッダー -->
@@ -148,5 +149,5 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
     <PostNavigation prevPost={prevPost} nextPost={nextPost} />
   </article>
 
-  <Footer siteName="aging-engineer" />
+  <Footer siteName={siteConfig.name} />
 </BaseLayout>

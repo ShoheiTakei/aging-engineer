@@ -14,6 +14,7 @@
 import { getCollection } from 'astro:content';
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
+import { siteConfig } from '../config/site';
 
 export async function GET(context: APIContext) {
   // 公開済みブログ記事を取得
@@ -24,9 +25,9 @@ export async function GET(context: APIContext) {
 
   return rss({
     // フィードのメタ情報
-    title: 'aging-engineer',
-    description: 'エイジングエンジニアの技術ブログ',
-    site: context.site?.toString() ?? 'https://aging-engineer.com',
+    title: siteConfig.rss.title,
+    description: siteConfig.rss.description,
+    site: context.site?.toString() ?? siteConfig.url,
 
     // 記事アイテム
     items: sortedPosts.map((post) => ({

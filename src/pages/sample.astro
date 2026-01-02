@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Header from '../components/Header.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config/site';
 
 // 型推論の動作確認
 const allPosts = await getCollection('blog');
@@ -19,7 +20,7 @@ for (const post of allPosts) {
 	description="Astro Content CollectionsとBaseLayoutコンポーネントの統合デモ"
 	type="website"
 >
-	<Header siteTitle="Aging Engineer Blog" currentPath="/sample" />
+	<Header siteTitle={siteConfig.fullName} currentPath="/sample" />
 	<div class="container-narrow py-8">
 		<h1 class="text-3xl font-bold mb-6">Content Collections 動作確認</h1>
 

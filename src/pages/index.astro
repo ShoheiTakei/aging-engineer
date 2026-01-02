@@ -1,11 +1,12 @@
 ---
 // Temporary index page - will be replaced by TASK-0011
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config/site';
 ---
 
 <BaseLayout
-  title="Aging Engineer Blog"
-  description="エンジニアリングに関するブログ。プログラミング、技術トピック、開発ノウハウを発信します。"
+  title={siteConfig.fullName}
+  description={siteConfig.description}
   type="website"
 >
   <div class="container-narrow py-12">
