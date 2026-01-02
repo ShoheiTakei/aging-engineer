@@ -1,0 +1,8 @@
+# Aging Engineer Blog - robots.txt
+# https://aging-engineer.pages.dev
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://aging-engineer.pages.dev/sitemap-index.xml
