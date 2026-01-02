@@ -1,0 +1,160 @@
+---
+/**
+ * OptimizedImage - 最適化画像コンポーネント
+ *
+ * WebP/AVIF変換に対応した画像最適化コンポーネント。
+ * Astro Imageの機能を活用し、モダンフォーマットの自動変換を行う。
+ *
+ * 要件:
+ * - TASK-0022: 画像最適化（WebP/AVIF変換）
+ * - R2ストレージとの統合対応
+ *
+ * 信頼性: 🔵 tech-stack.md・TASK-0022より
+ */
+
+import { Image, getImage } from 'astro:assets';
+import type { ImageOutputFormat } from 'astro';
+
+interface Props {
+  /** 画像のソース（ローカルまたはリモートURL） */
+  src: string | ImageMetadata;
+  /** 代替テキスト（アクセシビリティ必須） */
+  alt: string;
+  /** 表示幅 */
+  width: number;
+  /** 表示高さ */
+  height: number;
+  /** 出力フォーマット（デフォルト: webp） */
+  format?: ImageOutputFormat;
+  /** 品質（1-100、デフォルト: 80） */
+  quality?: number;
+  /** loading属性（デフォルト: lazy） */
+  loading?: 'lazy' | 'eager';
+  /** decoding属性（デフォルト: async） */
+  decoding?: 'sync' | 'async' | 'auto';
+  /** 追加のCSSクラス */
+  class?: string;
+  /** fetchpriority属性（重要な画像用） */
+  fetchpriority?: 'high' | 'low' | 'auto';
+  /** AVIF形式も生成するか */
+  includeAvif?: boolean;
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  format = 'webp',
+  quality = 80,
+  loading = 'lazy',
+  decoding = 'async',
+  class: className = '',
+  fetchpriority,
+  includeAvif = true,
+} = Astro.props;
+
+// リモート画像かローカル画像かを判定
+const isRemote = typeof src === 'string' && src.startsWith('http');
+
+// 画像ソースの型を明確に分離
+const remoteUrl = isRemote ? (src as string) : null;
+const localSrc = !isRemote ? (src as ImageMetadata) : null;
+
+// picture要素用のソースを生成（ローカル画像のみ）
+const generateSources = async () => {
+  const sources: Array<{ srcset: string; type: string }> = [];
+
+  if (isRemote || !localSrc) {
+    return sources;
+  }
+
+  // AVIF形式を追加（最も効率的）
+  if (includeAvif) {
+    try {
+      const avifImage = await getImage({
+        src: localSrc,
+        width,
+        height,
+        format: 'avif',
+        quality: quality - 5,
+      });
+      sources.push({
+        srcset: avifImage.src,
+        type: 'image/avif',
+      });
+    } catch {
+      // AVIFが失敗した場合は無視
+    }
+  }
+
+  // WebP形式を追加
+  try {
+    const webpImage = await getImage({
+      src: localSrc,
+      width,
+      height,
+      format: 'webp',
+      quality,
+    });
+    sources.push({
+      srcset: webpImage.src,
+      type: 'image/webp',
+    });
+  } catch {
+    // WebPが失敗した場合は無視
+  }
+
+  return sources;
+};
+
+const sources = await generateSources();
+---
+
+{
+  remoteUrl ? (
+    <Image
+      src={remoteUrl}
+      alt={alt}
+      width={width}
+      height={height}
+      format={format}
+      quality={quality}
+      loading={loading}
+      decoding={decoding}
+      class={className}
+      fetchpriority={fetchpriority}
+    />
+  ) : localSrc && sources.length > 0 ? (
+    <picture>
+      {sources.map((source) => (
+        <source srcset={source.srcset} type={source.type} />
+      ))}
+      <Image
+        src={localSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        format={format}
+        quality={quality}
+        loading={loading}
+        decoding={decoding}
+        class={className}
+        fetchpriority={fetchpriority}
+      />
+    </picture>
+  ) : localSrc ? (
+    <Image
+      src={localSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      format={format}
+      quality={quality}
+      loading={loading}
+      decoding={decoding}
+      class={className}
+      fetchpriority={fetchpriority}
+    />
+  ) : null
+}

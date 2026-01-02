@@ -6,7 +6,7 @@
  *
  * 要件:
  * - NFR-301: セマンティックHTML使用
- * - NFR-101～NFR-104: SEO対応（メタタグ、OGP）
+ * - NFR-101～NFR-104: SEO対応（メタタグ、OGP、Twitter Card、JSON-LD）
  * - NFR-302: キーボードナビゲーション対応
  * - NFR-303: ARIAラベル適切な設定
  *
@@ -14,6 +14,7 @@
  */
 
 import '../styles/global.css';
+import SEO from '../components/SEO.astro';
 
 interface Props {
   /** ページタイトル（必須） */
@@ -21,12 +22,35 @@ interface Props {
   /** ページの説明（必須） */
   description: string;
   /** OGP用URL（任意） */
-  ogUrl?: string;
+  url?: string;
   /** OGPタイプ（デフォルト: website） */
-  ogType?: 'website' | 'article';
+  type?: 'website' | 'article';
+  /** OGP画像URL（任意） */
+  image?: string;
+  /** 公開日（記事用） */
+  publishedTime?: Date;
+  /** 更新日（記事用） */
+  modifiedTime?: Date;
+  /** タグ（記事用） */
+  tags?: string[];
+  /** 正規URL */
+  canonicalUrl?: string;
+  /** noindex設定 */
+  noindex?: boolean;
 }
 
-const { title, description, ogUrl, ogType = 'website' } = Astro.props;
+const {
+  title,
+  description,
+  url,
+  type = 'website',
+  image,
+  publishedTime,
+  modifiedTime,
+  tags,
+  canonicalUrl,
+  noindex,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -76,15 +100,20 @@ const { title, description, ogUrl, ogType = 'website' } = Astro.props;
 			})();
 		</script>
 
-		<!-- SEOメタタグ (NFR-101) -->
+		<!-- SEOメタタグ・OGP・Twitter Card・JSON-LD (NFR-101～NFR-104) -->
 		<title>{title}</title>
-		<meta name="description" content={description} />
-
-		<!-- OGPメタタグ (NFR-102) -->
-		<meta property="og:title" content={title} />
-		<meta property="og:description" content={description} />
-		<meta property="og:type" content={ogType} />
-		{ogUrl && <meta property="og:url" content={ogUrl} />}
+		<SEO
+			title={title}
+			description={description}
+			url={url}
+			type={type}
+			image={image}
+			publishedTime={publishedTime}
+			modifiedTime={modifiedTime}
+			tags={tags}
+			canonicalUrl={canonicalUrl}
+			noindex={noindex}
+		/>
 
 		<!-- RSS Feed (REQ-401) -->
 		<link

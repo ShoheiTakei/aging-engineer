@@ -7,14 +7,12 @@
  *
  * 信頼性: 🔵 Vitest公式ドキュメントに基づく
  *
- * 注意: getViteConfig (astro/config) はVitest 2.x + Astro 5.x で互換性問題があるため、
- * 直接 defineConfig を使用しています。
+ * Astro コンポーネントテストのため getViteConfig を使用
  */
 
 import { getViteConfig } from 'astro/config';
-import { defineConfig, mergeConfig } from 'vitest/config';
 
-export default defineConfig({
+export default getViteConfig({
   test: {
     // ========================================
     // テスト環境設定

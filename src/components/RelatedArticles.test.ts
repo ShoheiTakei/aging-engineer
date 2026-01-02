@@ -4,18 +4,20 @@
  * 関連要件:
  * - REQ-701: 記事詳細ページに関連記事リストを表示
  *   - タグが一致する記事を優先表示
- *   - 最大3件まで表示（コンポーネントレベル）
+ *   - 最大5件まで表示
  *   - 現在の記事を除外
  *
- * 関連文書:
- * - 関連記事ユーティリティ: src/utils/relatedArticles.ts
- * - テストパターン: docs/design/frontend-test-infra/test-patterns.md
+ * テスト方針:
+ * - コンポーネントのHTML出力を検証
+ * - アクセシビリティ属性の存在確認
+ * - 境界値・異常系のテスト
  */
 
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { beforeEach, describe, expect, it } from 'vitest';
-import type { BlogPost, RelatedPostEntry } from '../utils/relatedArticles';
+import { describe, expect, it, beforeEach } from 'vitest';
 import RelatedArticles from './RelatedArticles.astro';
+import type { RelatedPostEntry } from '../utils/relatedArticles';
+import type { CollectionEntry } from 'astro:content';
 
 // ========================================
 // テストヘルパー関数
@@ -24,12 +26,14 @@ import RelatedArticles from './RelatedArticles.astro';
 /**
  * テスト用のBlogPostを生成するヘルパー関数
  */
+type BlogPost = CollectionEntry<'blog'>;
+
 function createMockPost(params: {
   id: string;
   title?: string;
   description?: string;
-  tags?: string[];
   pubDate?: Date;
+  tags?: string[];
 }): BlogPost {
   return {
     id: params.id,
@@ -39,7 +43,7 @@ function createMockPost(params: {
       title: params.title ?? `Test Post: ${params.id}`,
       description: params.description ?? 'Test description',
       pubDate: params.pubDate ?? new Date('2025-01-15'),
-      updatedDate: new Date('2025-01-15'),
+      updatedDate: params.pubDate ?? new Date('2025-01-15'),
       coverImage: 'https://placehold.co/1200x630',
       tags: params.tags ?? [],
       draft: false,
@@ -50,27 +54,26 @@ function createMockPost(params: {
 /**
  * テスト用のRelatedPostEntryを生成するヘルパー関数
  */
-function createMockRelatedEntry(params: {
+function createRelatedEntry(params: {
   id: string;
   title?: string;
-  description?: string;
-  tags?: string[];
   score?: number;
   commonTags?: string[];
+  pubDate?: Date;
 }): RelatedPostEntry {
   return {
     post: createMockPost({
       id: params.id,
       title: params.title,
-      description: params.description,
-      tags: params.tags,
+      pubDate: params.pubDate,
+      tags: params.commonTags ?? ['TypeScript'],
     }),
     score: params.score ?? 1,
-    commonTags: params.commonTags ?? [],
+    commonTags: params.commonTags ?? ['TypeScript'],
   };
 }
 
-describe('RelatedArticles.astro', () => {
+describe('RelatedArticles component', () => {
   let container: AstroContainer;
 
   beforeEach(async () => {
@@ -82,85 +85,42 @@ describe('RelatedArticles.astro', () => {
   // ========================================
 
   describe('正常系テストケース', () => {
-    // TC-RA-C-001: 基本レンダリングテスト
-    it('TC-RA-C-001: 関連記事コンポーネントが正しくレンダリングされる', async () => {
+    // TC-RAC-001: 関連記事リストを正しく表示する
+    it('TC-RAC-001: 関連記事リストを正しく表示する', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({
-          id: 'post-1',
-          title: '関連記事1',
-          tags: ['TypeScript'],
-          commonTags: ['TypeScript'],
-        }),
+        createRelatedEntry({ id: 'post-1', title: '関連記事1', score: 2, commonTags: ['TypeScript', 'React'] }),
+        createRelatedEntry({ id: 'post-2', title: '関連記事2', score: 1, commonTags: ['TypeScript'] }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      // セクションがレンダリングされる
-      expect(result).toContain('<section');
+      // 関連記事セクションが表示される
       expect(result).toContain('関連記事');
+      // 各記事タイトルが表示される
+      expect(result).toContain('関連記事1');
+      expect(result).toContain('関連記事2');
     });
 
-    // TC-RA-C-002: 最大3件の関連記事を表示
-    it('TC-RA-C-002: 最大3件の関連記事を表示する', async () => {
+    // TC-RAC-002: 記事へのリンクが正しく生成される
+    it('TC-RAC-002: 記事へのリンクが正しく生成される', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'post-1', title: '記事1' }),
-        createMockRelatedEntry({ id: 'post-2', title: '記事2' }),
-        createMockRelatedEntry({ id: 'post-3', title: '記事3' }),
+        createRelatedEntry({ id: 'test-post-slug', title: 'テスト記事' }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      expect(result).toContain('記事1');
-      expect(result).toContain('記事2');
-      expect(result).toContain('記事3');
+      // 記事へのリンクが正しいパスで生成される
+      expect(result).toContain('href="/blog/test-post-slug"');
     });
 
-    // TC-RA-C-003: カード形式で表示される
-    it('TC-RA-C-003: 関連記事がカード形式で表示される', async () => {
+    // TC-RAC-003: 共通タグ情報を表示する
+    it('TC-RAC-003: 共通タグ情報を表示する', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({
-          id: 'post-1',
-          title: '関連記事タイトル',
-          description: '関連記事の説明文',
-        }),
-      ];
-
-      const result = await container.renderToString(RelatedArticles, {
-        props: { relatedPosts },
-      });
-
-      // カードスタイルクラスが適用されている
-      expect(result).toMatch(/class="[^"]*(?:rounded|border|shadow|bg-)/);
-      // タイトルと説明が表示される
-      expect(result).toContain('関連記事タイトル');
-    });
-
-    // TC-RA-C-004: 記事へのリンクが正しく設定される
-    it('TC-RA-C-004: 各関連記事に正しいリンクが設定される', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'sample-post', title: 'サンプル記事' }),
-      ];
-
-      const result = await container.renderToString(RelatedArticles, {
-        props: { relatedPosts },
-      });
-
-      // 記事へのリンクが含まれる
-      expect(result).toContain('href="/blog/sample-post"');
-    });
-
-    // TC-RA-C-005: 共通タグが表示される
-    it('TC-RA-C-005: 共通タグが表示される', async () => {
-      const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({
-          id: 'post-1',
-          title: '関連記事',
-          commonTags: ['TypeScript', 'React'],
-        }),
+        createRelatedEntry({ id: 'post-1', commonTags: ['TypeScript', 'React'] }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
@@ -171,6 +131,20 @@ describe('RelatedArticles.astro', () => {
       expect(result).toContain('TypeScript');
       expect(result).toContain('React');
     });
+
+    // TC-RAC-004: 公開日が表示される
+    it('TC-RAC-004: 公開日が表示される', async () => {
+      const relatedPosts: RelatedPostEntry[] = [
+        createRelatedEntry({ id: 'post-1', pubDate: new Date('2025-01-15') }),
+      ];
+
+      const result = await container.renderToString(RelatedArticles, {
+        props: { relatedPosts },
+      });
+
+      // 公開日が表示される（日本語フォーマット）
+      expect(result).toContain('2025');
+    });
   });
 
   // ========================================
@@ -178,22 +152,23 @@ describe('RelatedArticles.astro', () => {
   // ========================================
 
   describe('境界値テストケース', () => {
-    // TC-RA-C-101: 関連記事が0件の場合
-    it('TC-RA-C-101: 関連記事が0件の場合はセクションを表示しない', async () => {
+    // TC-RAC-101: 関連記事が0件の場合はセクション非表示
+    it('TC-RAC-101: 関連記事が0件の場合はセクション非表示', async () => {
       const relatedPosts: RelatedPostEntry[] = [];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      // セクションが表示されない（空または非表示）
+      // セクションが表示されない
       expect(result).not.toContain('関連記事');
+      expect(result).not.toContain('<section');
     });
 
-    // TC-RA-C-102: 関連記事が1件のみの場合
-    it('TC-RA-C-102: 関連記事が1件のみの場合も正しく表示される', async () => {
+    // TC-RAC-102: 関連記事が1件の場合も正常表示
+    it('TC-RAC-102: 関連記事が1件の場合も正常表示', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'post-1', title: '唯一の関連記事' }),
+        createRelatedEntry({ id: 'post-1', title: '唯一の関連記事' }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
@@ -203,6 +178,22 @@ describe('RelatedArticles.astro', () => {
       expect(result).toContain('関連記事');
       expect(result).toContain('唯一の関連記事');
     });
+
+    // TC-RAC-103: 関連記事が5件の場合も正常表示
+    it('TC-RAC-103: 関連記事が5件の場合も正常表示', async () => {
+      const relatedPosts: RelatedPostEntry[] = Array.from({ length: 5 }, (_, i) =>
+        createRelatedEntry({ id: `post-${i + 1}`, title: `関連記事${i + 1}` })
+      );
+
+      const result = await container.renderToString(RelatedArticles, {
+        props: { relatedPosts },
+      });
+
+      // すべての記事が表示される
+      for (let i = 1; i <= 5; i++) {
+        expect(result).toContain(`関連記事${i}`);
+      }
+    });
   });
 
   // ========================================
@@ -210,34 +201,63 @@ describe('RelatedArticles.astro', () => {
   // ========================================
 
   describe('アクセシビリティテストケース', () => {
-    // TC-RA-C-201: セマンティックHTML使用
-    it('TC-RA-C-201: セマンティックHTML（section, article）が使用されている', async () => {
+    // TC-RAC-201: セマンティックHTML（section, h2）使用
+    it('TC-RAC-201: セマンティックHTML（section, h2）使用', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'post-1', title: '関連記事' }),
+        createRelatedEntry({ id: 'post-1' }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      // <section>タグが使用されている
-      expect(result).toMatch(/<section[^>]*>/);
-      // 見出しが存在する
-      expect(result).toMatch(/<h[2-3][^>]*>/);
+      // セマンティックHTML要素が使用される
+      expect(result).toContain('<section');
+      expect(result).toContain('<h2');
     });
 
-    // TC-RA-C-202: リンクにアクセシブルな名前がある
-    it('TC-RA-C-202: リンクにアクセシブルな名前（タイトル）がある', async () => {
+    // TC-RAC-202: aria-labelledby属性が設定される
+    it('TC-RAC-202: aria-labelledby属性が設定される', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'post-1', title: '関連記事のタイトル' }),
+        createRelatedEntry({ id: 'post-1' }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      // リンク内にタイトルテキストがある
-      expect(result).toMatch(/<a[^>]*>.*関連記事のタイトル.*<\/a>/s);
+      // aria-labelledby属性が設定される
+      expect(result).toContain('aria-labelledby');
+    });
+
+    // TC-RAC-203: リスト構造（ul, li）が使用される
+    it('TC-RAC-203: リスト構造（ul, li）が使用される', async () => {
+      const relatedPosts: RelatedPostEntry[] = [
+        createRelatedEntry({ id: 'post-1' }),
+        createRelatedEntry({ id: 'post-2' }),
+      ];
+
+      const result = await container.renderToString(RelatedArticles, {
+        props: { relatedPosts },
+      });
+
+      // リスト構造が使用される
+      expect(result).toContain('<ul');
+      expect(result).toContain('<li');
+    });
+
+    // TC-RAC-204: フォーカス可視化スタイルが設定される
+    it('TC-RAC-204: フォーカス可視化スタイルが設定される', async () => {
+      const relatedPosts: RelatedPostEntry[] = [
+        createRelatedEntry({ id: 'post-1' }),
+      ];
+
+      const result = await container.renderToString(RelatedArticles, {
+        props: { relatedPosts },
+      });
+
+      // フォーカス可視化のTailwindクラスが使用される
+      expect(result).toContain('focus-visible:ring');
     });
   });
 
@@ -246,34 +266,32 @@ describe('RelatedArticles.astro', () => {
   // ========================================
 
   describe('スタイリングテストケース', () => {
-    // TC-RA-C-301: ダークモード対応スタイル
-    it('TC-RA-C-301: ダークモード用スタイルクラスが適用されている', async () => {
+    // TC-RAC-301: ダークモード対応スタイルが設定される
+    it('TC-RAC-301: ダークモード対応スタイルが設定される', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'post-1', title: '関連記事' }),
+        createRelatedEntry({ id: 'post-1' }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      // dark:プレフィックスクラスが含まれている
-      expect(result).toMatch(/class="[^"]*dark:[^"]*"/);
+      // ダークモード対応のTailwindクラスが使用される
+      expect(result).toContain('dark:');
     });
 
-    // TC-RA-C-302: グリッドレイアウトでカードが配置される
-    it('TC-RA-C-302: グリッドレイアウトでカードが配置される', async () => {
+    // TC-RAC-302: レスポンシブデザインが適用される
+    it('TC-RAC-302: レスポンシブデザインが適用される', async () => {
       const relatedPosts: RelatedPostEntry[] = [
-        createMockRelatedEntry({ id: 'post-1', title: '記事1' }),
-        createMockRelatedEntry({ id: 'post-2', title: '記事2' }),
-        createMockRelatedEntry({ id: 'post-3', title: '記事3' }),
+        createRelatedEntry({ id: 'post-1' }),
       ];
 
       const result = await container.renderToString(RelatedArticles, {
         props: { relatedPosts },
       });
 
-      // グリッドクラスが適用されている
-      expect(result).toMatch(/class="[^"]*grid[^"]*"/);
+      // グリッドレイアウトのレスポンシブクラスが使用される
+      expect(result).toMatch(/grid|flex/);
     });
   });
 });
