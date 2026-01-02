@@ -69,7 +69,10 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
 <BaseLayout
   title={post.data.title}
   description={post.data.description}
-  ogType="article"
+  type="article"
+  publishedTime={post.data.pubDate}
+  modifiedTime={post.data.updatedDate}
+  tags={post.data.tags}
 >
   <Header siteTitle="aging-engineer" currentPath={`/blog/${post.id}`} />
 
