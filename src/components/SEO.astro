@@ -1,0 +1,191 @@
+---
+/**
+ * SEO - SEOメタタグコンポーネント
+ *
+ * メタタグ、OGP、Twitter Card、JSON-LDを一元管理します。
+ *
+ * 要件:
+ * - NFR-101: メタタグ設定
+ * - NFR-102: OGP対応
+ * - NFR-103: Twitter Card対応
+ * - NFR-104: JSON-LD構造化データ
+ *
+ * 信頼性: 🔵 requirements.md・architecture.mdより
+ */
+
+interface Props {
+  /** ページタイトル（必須） */
+  title: string;
+  /** ページの説明（必須） */
+  description: string;
+  /** ページURL（任意） */
+  url?: string;
+  /** OGP画像URL（任意） */
+  image?: string;
+  /** ページタイプ（デフォルト: website） */
+  type?: 'website' | 'article';
+  /** 公開日（記事用） */
+  publishedTime?: Date;
+  /** 更新日（記事用） */
+  modifiedTime?: Date;
+  /** タグ（記事用） */
+  tags?: string[];
+  /** 著者名 */
+  author?: string;
+  /** サイト名 */
+  siteName?: string;
+  /** Twitter Cardタイプ */
+  twitterCard?: 'summary' | 'summary_large_image';
+  /** Twitter アカウント */
+  twitterSite?: string;
+  /** 正規URL */
+  canonicalUrl?: string;
+  /** noindex設定 */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  url,
+  image = 'https://placehold.co/1200x630',
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  tags = [],
+  author = 'Aging Engineer',
+  siteName = 'Aging Engineer Blog',
+  twitterCard = 'summary_large_image',
+  twitterSite,
+  canonicalUrl,
+  noindex = false,
+} = Astro.props;
+
+// サイトURLの取得（末尾スラッシュを除去）
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://aging-engineer.pages.dev';
+const pageUrl = url || Astro.url.href;
+const canonical = canonicalUrl || pageUrl;
+
+// JSON-LD: WebSiteスキーマ
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteName,
+  url: siteUrl,
+  description: 'Aging Engineer Blog - エンジニアリングブログ',
+  inLanguage: 'ja',
+  publisher: {
+    '@type': 'Organization',
+    name: siteName,
+    url: siteUrl,
+  },
+};
+
+// JSON-LD: Articleスキーマ（記事ページのみ）
+const articleSchema =
+  type === 'article'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        description: description,
+        image: image,
+        author: {
+          '@type': 'Person',
+          name: author,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: siteName,
+          url: siteUrl,
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': pageUrl,
+        },
+        datePublished: publishedTime?.toISOString(),
+        dateModified: modifiedTime?.toISOString() || publishedTime?.toISOString(),
+        keywords: tags.join(', '),
+        inLanguage: 'ja',
+      }
+    : null;
+
+// JSON-LD: BreadcrumbListスキーマ
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: siteUrl,
+    },
+    ...(type === 'article'
+      ? [
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: title,
+            item: pageUrl,
+          },
+        ]
+      : []),
+  ],
+};
+---
+
+<!-- 基本メタタグ (NFR-101) -->
+<meta name="description" content={description} />
+{canonicalUrl && <link rel="canonical" href={canonical} />}
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- OGPメタタグ (NFR-102) -->
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={type} />
+<meta property="og:url" content={pageUrl} />
+<meta property="og:image" content={image} />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:locale" content="ja_JP" />
+
+<!-- 記事用OGPメタタグ -->
+{
+  type === 'article' && publishedTime && (
+    <meta property="article:published_time" content={publishedTime.toISOString()} />
+  )
+}
+{
+  type === 'article' && modifiedTime && (
+    <meta property="article:modified_time" content={modifiedTime.toISOString()} />
+  )
+}
+{type === 'article' && author && <meta property="article:author" content={author} />}
+{
+  type === 'article' &&
+    tags.map((tag) => <meta property="article:tag" content={tag} />)
+}
+
+<!-- Twitter Cardメタタグ (NFR-103) -->
+<meta name="twitter:card" content={twitterCard} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image} />
+{twitterSite && <meta name="twitter:site" content={'@' + twitterSite} />}
+
+<!-- JSON-LD構造化データ (NFR-104) -->
+<script is:inline type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+{
+  type === 'article' && articleSchema && (
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(articleSchema)}
+    />
+  )
+}
+<script
+  is:inline
+  type="application/ld+json"
+  set:html={JSON.stringify(breadcrumbSchema)}
+/>
