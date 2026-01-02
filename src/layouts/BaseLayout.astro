@@ -138,7 +138,7 @@ const faviconBase = '/assets/favicons';
     <link rel="manifest" href={`${faviconBase}/site.webmanifest`}>
     <meta name="theme-color" content="#000000">
 	</head>
-	<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+	<body class="flex flex-col min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 		<!--
 			【スキップリンク】（WCAG 2.4.1: ブロックスキップ）
 			キーボードユーザーがナビゲーションをスキップしてメインコンテンツに直接移動できるようにする
@@ -165,7 +165,7 @@ const faviconBase = '/assets/favicons';
 		</a>
 
 		<!-- メインコンテンツ (NFR-301: セマンティックHTML) -->
-		<main id="main-content" class="min-h-screen">
+		<main id="main-content" class="flex-grow">
 			<slot />
 		</main>
 	</body>
