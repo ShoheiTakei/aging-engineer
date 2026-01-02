@@ -137,7 +137,7 @@ const breadcrumbSchema = {
 
 <!-- 基本メタタグ (NFR-101) -->
 <meta name="description" content={description} />
-{canonicalUrl && <link rel="canonical" href={canonical} />}
+<link rel="canonical" href={canonical} />
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 
 <!-- OGPメタタグ (NFR-102) -->
