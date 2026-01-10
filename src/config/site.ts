@@ -52,7 +52,7 @@ export const siteConfig: SiteConfig = {
   name: 'Aging Engineer',
   fullName: 'Aging Engineer',
   url: 'https://aging-engineer.com',
-  description: '40代からのエンジニアリング。経験と知識を活かした技術情報を発信します。',
+  description: '20代からのエンジニアリング。経験と知識を活かした技術情報を発信します。',
   fullDescription: 'Aging Engineer - エンジニアリングブログ',
   author: {
     name: 'Aging Engineer',
