@@ -1,0 +1,68 @@
+---
+/**
+ * MermaidScript - Mermaid 図の動的初期化
+ *
+ * rehype-mermaid (strategy: 'pre-mermaid') が出力する <pre class="mermaid">
+ * を検出して mermaid.js を遅延ロードし、SVG にレンダリングする。
+ *
+ * - .mermaid 要素が無いページでは mermaid.js を読み込まない
+ * - html.dark の有無でテーマを切替、ThemeToggle 操作にも追従
+ */
+---
+
+<script>
+  import type mermaidType from 'mermaid';
+
+  const SOURCE_ATTR = 'data-mermaid-source';
+
+  function currentTheme(): 'dark' | 'default' {
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'default';
+  }
+
+  let mermaidPromise: Promise<typeof mermaidType> | null = null;
+
+  async function loadMermaid() {
+    if (!mermaidPromise) {
+      mermaidPromise = import('mermaid').then((m) => m.default);
+    }
+    return mermaidPromise;
+  }
+
+  async function renderAll() {
+    const nodes = document.querySelectorAll<HTMLElement>('pre.mermaid, .mermaid');
+    if (nodes.length === 0) return;
+
+    const mermaid = await loadMermaid();
+    mermaid.initialize({ startOnLoad: false, theme: currentTheme() });
+
+    for (const [index, node] of nodes.entries()) {
+      const source = node.getAttribute(SOURCE_ATTR) ?? node.textContent ?? '';
+      if (!node.hasAttribute(SOURCE_ATTR)) {
+        node.setAttribute(SOURCE_ATTR, source);
+      }
+      try {
+        const id = `mermaid-${Date.now()}-${index}`;
+        const { svg } = await mermaid.render(id, source);
+        node.innerHTML = svg;
+        node.classList.add('mermaid-rendered');
+      } catch (error) {
+        console.error('[MermaidScript] render failed', error);
+      }
+    }
+  }
+
+  renderAll();
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.attributeName === 'class') {
+        document
+          .querySelectorAll<HTMLElement>('.mermaid-rendered')
+          .forEach((node) => node.classList.remove('mermaid-rendered'));
+        renderAll();
+        return;
+      }
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+</script>

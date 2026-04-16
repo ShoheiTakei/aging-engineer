@@ -12,6 +12,7 @@
 
 import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
+import MermaidScript from '../../components/MermaidScript.astro';
 import PostNavigation from '../../components/PostNavigation.astro';
 import RelatedArticles from '../../components/RelatedArticles.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
@@ -146,4 +147,5 @@ const relatedPosts = getRelatedPosts(post, allPosts, { maxItems: 3 });
     <PostNavigation prevPost={prevPost} nextPost={nextPost} />
   </article>
 
+  <MermaidScript />
 </BaseLayout>
