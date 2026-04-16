@@ -12,39 +12,69 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /**
- * カスタムベーススタイル
- * NFR-301: セマンティックHTML、WCAG 2.1 AA準拠
+ * Bujo (Bullet Journal) デザイントークン
+ *
+ * 「紙の上にインクで書かれたノート」の世界観を支える最小限のパレット。
+ * Tailwind v4 の @theme が bg-paper / text-ink / border-rule / outline-accent
+ * などのユーティリティを自動生成する。.dark 内で同名変数を再定義すること
+ * で、ダークモードは「夜のノート」に切り替わる（utility class 側は無改変）。
  */
+@theme {
+  --color-paper: #faf7f0;
+  --color-ink: #2b2a26;
+  --color-ink-soft: #6b6862;
+  --color-rule: #c8c2b0;
+  --color-accent: #c9463b;
+  --color-marker: #f5e17a;
+}
+
 @layer base {
   :root {
-    /* ライトモードカラー */
-    --color-primary: 59 130 246; /* blue-500 */
-    --color-secondary: 107 114 128; /* gray-500 */
-    --color-background: 255 255 255; /* white */
-    --color-text: 17 24 39; /* gray-900 */
+    /* レガシー変数（既存参照の後方互換のため残置） */
+    --color-primary: 59 130 246;
+    --color-secondary: 107 114 128;
+    --color-background: 255 255 255;
+    --color-text: 17 24 39;
   }
 
   .dark {
-    /* ダークモードカラー (tech-stack.md: ダークモードデフォルト) */
-    --color-primary: 96 165 250; /* blue-400 */
-    --color-secondary: 156 163 175; /* gray-400 */
-    --color-background: 17 24 39; /* gray-900 */
-    --color-text: 243 244 246; /* gray-100 */
+    /* 夜のノート: ランタイムで @theme の変数を上書き */
+    --color-paper: #1a1814;
+    --color-ink: #e8e3d5;
+    --color-ink-soft: #9c978a;
+    --color-rule: #3a3630;
+    --color-accent: #e87268;
+    --color-marker: #6b5d1f;
+
+    --color-primary: 96 165 250;
+    --color-secondary: 156 163 175;
+    --color-background: 17 24 39;
+    --color-text: 243 244 246;
   }
 
-  /* NFR-304: フォーカス可視化 (WCAG 2.1 AA) */
+  /* NFR-304: フォーカス可視化 — 青→朱（Bujoアクセント） */
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-blue-500;
+    @apply outline-2 outline-offset-2 outline-accent;
   }
 
-  /* セマンティックHTML - 基本スタイル */
   html {
     @apply scroll-smooth;
   }
 
+  /**
+   * body: 紙面 + ドットグリッド
+   * 28px間隔の極小ラジアルグラデーションで「引き出し線のないノート」を再現。
+   * GPU合成され印刷時も崩れない。background-attachment: fixed は敢えて指定せず
+   * スクロール時も連続したノート面として振る舞わせる。
+   */
   body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
-    @apply font-sans antialiased;
+    @apply bg-paper text-ink font-sans antialiased;
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      var(--color-rule) 1px,
+      transparent 0
+    );
+    background-size: 28px 28px;
   }
 
   /* 見出しスタイル */
@@ -76,10 +106,13 @@
     @apply text-base md:text-lg;
   }
 
-  /* リンクスタイル */
+  /* リンク: 朱ペンで下線を引く感覚 */
   a {
-    @apply text-blue-600 dark:text-blue-400 hover:underline;
-    @apply transition-colors duration-200;
+    @apply text-accent transition-colors duration-200;
+  }
+
+  a:hover {
+    @apply underline;
   }
 
   /* コードブロックスタイル (REQ-111: Shiki対応) */
