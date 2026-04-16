@@ -214,6 +214,19 @@
     @apply bg-transparent p-0 text-sm;
   }
 
+  /**
+   * Mermaid 図ブロック
+   * rehype-mermaid (pre-mermaid) が出力する <pre class="mermaid">。
+   * デフォルトの暗いコードブロック装飾を打ち消し、SVG を中央寄せで表示する。
+   */
+  .prose pre.mermaid {
+    @apply bg-transparent p-0 my-6 flex justify-center overflow-x-auto;
+  }
+
+  .prose pre.mermaid svg {
+    @apply max-w-full h-auto;
+  }
+
   .prose img {
     @apply rounded-lg my-6 mx-auto;
   }

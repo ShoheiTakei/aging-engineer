@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
+import rehypeMermaid from 'rehype-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,10 +19,15 @@ export default defineConfig({
   },
 
   markdown: {
+    syntaxHighlight: {
+      type: 'shiki',
+      excludeLangs: ['mermaid'],
+    },
     shikiConfig: {
       theme: 'github-dark',
       wrap: true,
     },
+    rehypePlugins: [[rehypeMermaid, { strategy: 'pre-mermaid' }]],
   },
 
   // 画像最適化設定 (TASK-0022: 画像最適化)

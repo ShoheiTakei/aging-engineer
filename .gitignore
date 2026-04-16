@@ -35,3 +35,6 @@ playwright/.cache/
 
 # Wrangler
 .wrangler/
+
+# Playwright MCP（ローカル検証用の一時スナップショット）
+.playwright-mcp/
