@@ -13,8 +13,8 @@
 
 import { getCollection } from 'astro:content';
 import BlogCard from '../components/BlogCard.astro';
-import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
 
 // 全ブログ記事を取得（下書きを除外、公開日降順）
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
