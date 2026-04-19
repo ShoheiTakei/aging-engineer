@@ -65,6 +65,7 @@ describe('Header.astro', () => {
       // 必須ナビゲーション項目
       expect(result).toContain('href="/"'); // ホーム
       expect(result).toContain('href="/blog"'); // ブログ
+      expect(result).toContain('href="/scraps"'); // スクラップ
       expect(result).toContain('href="/tags"'); // タグ
       expect(result).toContain('href="/search"'); // 検索
       expect(result).toContain('href="/rss.xml"'); // RSS
@@ -72,6 +73,7 @@ describe('Header.astro', () => {
       // リンクテキスト
       expect(result).toContain('ホーム');
       expect(result).toContain('ブログ');
+      expect(result).toContain('スクラップ');
       expect(result).toContain('タグ');
       expect(result).toContain('検索');
       expect(result).toContain('RSS');
@@ -209,7 +211,7 @@ describe('Header.astro', () => {
       // すべてのナビゲーション項目が<a>タグで実装されている
       const linkMatches = result.match(/<a\s+href="[^"]+"/g);
       expect(linkMatches).toBeDefined();
-      expect(linkMatches?.length).toBeGreaterThanOrEqual(5); // 最低5つのリンク
+      expect(linkMatches?.length).toBeGreaterThanOrEqual(6); // 最低6つのリンク
 
       // ボタンではなくリンクが使用されている（<button>が含まれない）
       expect(result).not.toMatch(/<button[^>]*>ホーム<\/button>/);

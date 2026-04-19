@@ -35,6 +35,18 @@ const blogCollection = defineCollection({
     })),
 });
 
+const scrapsCollection = defineCollection({
+  loader: glob({
+    base: './src/content/scraps',
+    pattern: '**/[^_]*.md',
+  }),
+  schema: z.object({
+    date: z.date(),
+    tags: z.array(z.string()).default([]),
+  }),
+});
+
 export const collections = {
   blog: blogCollection,
+  scraps: scrapsCollection,
 };
