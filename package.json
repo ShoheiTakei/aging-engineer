@@ -17,7 +17,8 @@
     "build-storybook": "storybook build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:perf": "vitest run tests/performance/"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.14",

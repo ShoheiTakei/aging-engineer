@@ -68,6 +68,11 @@ const faviconBase = '/assets/favicons';
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+		<!-- リソースヒント（TASK-0025: パフォーマンス最適化） -->
+		<!-- Cloudflare CDNへの事前接続でDNS解決・TCP接続を高速化 -->
+		<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+		<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+
 		<!--
 			【テーマ初期化スクリプト】（TASK-0005対応）
 			- フラッシュ防止: ページ読み込み時のちらつきを防止するため、head内でis:inlineで即時実行
